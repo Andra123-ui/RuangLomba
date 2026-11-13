@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\OtpService;
 use App\Models\OrganizerProfileModel;
 use App\Models\UserModel;
 use App\Models\UserPreferenceModel;
@@ -25,7 +26,6 @@ class Auth extends BaseController
             return $redirect;
         }
 
-        // Batasi percobaan: 5x per menit per IP
         $throttler = service('throttler');
         if ($throttler->check(md5($this->request->getIPAddress() . '-login'), 5, MINUTE) === false) {
             return redirect()->back()->withInput()
@@ -47,13 +47,21 @@ class Auth extends BaseController
 
         $user = (new UserModel())->where('email', $email)->first();
 
-        // Pesan sengaja sama untuk email salah maupun password salah
         if (! $user || ! password_verify($password, $user['password_hash'])) {
             return redirect()->back()->withInput()
                 ->with('error', 'Email atau password salah.');
         }
 
-        $this->startSession($user);
+        // Email belum diverifikasi -> kirim OTP, arahkan ke halaman verifikasi
+        if (empty($user['email_verified_at'])) {
+            $sent = $this->sendOtp($user['email'], $user['name'], 'verify');
+            session()->set('otpEmail', $user['email']);
+
+            return redirect()->to(base_url('verifikasi'))
+                ->with($sent ? 'success' : 'error', $sent
+                    ? 'Email kamu belum diverifikasi. Kami sudah mengirim kode ke emailmu.'
+                    : 'Email belum diverifikasi, tapi kode gagal dikirim. Coba kirim ulang.');
+        }
 
         $next = $this->afterAuthUrl($user['role']);
         $this->startSession($user);
@@ -134,13 +142,16 @@ class Auth extends BaseController
                 ->with('errors', $this->validator->getErrors());
         }
 
+        $name  = trim($this->request->getPost('name'));
+        $email = strtolower(trim($this->request->getPost('email')));
+
         $db = db_connect();
         $db->transStart();
 
         $userModel = new UserModel();
         $userModel->insert([
-            'name'          => trim($this->request->getPost('name')),
-            'email'         => strtolower(trim($this->request->getPost('email'))),
+            'name'          => $name,
+            'email'         => $email,
             'password_hash' => password_hash((string) $this->request->getPost('password'), PASSWORD_DEFAULT),
             'role'          => $role,
         ]);
@@ -168,12 +179,253 @@ class Auth extends BaseController
                 ->with('error', 'Pendaftaran gagal. Silakan coba lagi.');
         }
 
-         // Langsung login setelah daftar
-        $next = $this->afterAuthUrl($role);
-        $this->startSession($userModel->find($userId));
+        // Kirim OTP verifikasi, login setelah email terverifikasi
+        $sent = $this->sendOtp($email, $name, 'verify');
+        session()->set('otpEmail', $email);
+
+        return redirect()->to(base_url('verifikasi'))
+            ->with($sent ? 'success' : 'error', $sent
+                ? 'Akun dibuat! Kami sudah mengirim kode verifikasi ke emailmu.'
+                : 'Akun dibuat, tapi kode gagal dikirim. Tekan "Kirim ulang kode".');
+    }
+
+    // ------------------------------------------------------- VERIFIKASI EMAIL
+
+    public function verify()
+    {
+        if ($redirect = $this->redirectIfLoggedIn()) {
+            return $redirect;
+        }
+
+        $email = (string) session()->get('otpEmail');
+        if ($email === '') {
+            return redirect()->to(base_url('masuk'));
+        }
+
+        return view('auth/verify', [
+            'title' => 'Verifikasi Email',
+            'email' => $this->maskEmail($email),
+            'wait'  => (new OtpService())->cooldownLeft($email, 'verify'),
+        ]);
+    }
+
+    public function attemptVerify()
+    {
+        $email = (string) session()->get('otpEmail');
+        if ($email === '') {
+            return redirect()->to(base_url('masuk'));
+        }
+
+        if (service('throttler')->check(md5($this->request->getIPAddress() . '-verify'), 10, MINUTE) === false) {
+            return redirect()->back()->with('error', 'Terlalu banyak percobaan. Coba lagi sebentar.');
+        }
+
+        $code = preg_replace('/\D/', '', (string) $this->request->getPost('otp'));
+        if (strlen($code) !== 6) {
+            return redirect()->back()->with('error', 'Masukkan 6 digit kode.');
+        }
+
+        $result = (new OtpService())->verify($email, 'verify', $code);
+        if (! $result['ok']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        db_connect()->table('users')->where('email', $email)
+            ->update(['email_verified_at' => date('Y-m-d H:i:s')]);
+
+        $user = (new UserModel())->where('email', $email)->first();
+        session()->remove('otpEmail');
+
+        if (! $user) {
+            return redirect()->to(base_url('masuk'));
+        }
+
+        $next = $this->afterAuthUrl($user['role']);
+        $this->startSession($user);
 
         return redirect()->to($next)
-            ->with('success', 'Akun berhasil dibuat. Selamat datang di RuangLomba!');
+            ->with('success', 'Email terverifikasi. Selamat datang di RuangLomba!');
+    }
+
+    public function resendVerify()
+    {
+        $email = (string) session()->get('otpEmail');
+        if ($email === '') {
+            return redirect()->to(base_url('masuk'));
+        }
+
+        $user = (new UserModel())->where('email', $email)->first();
+        if ($user && empty($user['email_verified_at'])) {
+            $sent = $this->sendOtp($email, $user['name'], 'verify');
+
+            return redirect()->to(base_url('verifikasi'))
+                ->with($sent ? 'success' : 'error', $sent
+                    ? 'Kode baru sudah dikirim.'
+                    : 'Kode belum bisa dikirim. Tunggu sebentar lalu coba lagi.');
+        }
+
+        return redirect()->to(base_url('masuk'));
+    }
+
+    // --------------------------------------------------------- LUPA PASSWORD
+
+    public function forgot()
+    {
+        if ($redirect = $this->redirectIfLoggedIn()) {
+            return $redirect;
+        }
+
+        return view('auth/forgot', ['title' => 'Lupa Password']);
+    }
+
+    public function attemptForgot()
+    {
+        if ($redirect = $this->redirectIfLoggedIn()) {
+            return $redirect;
+        }
+
+        if (service('throttler')->check(md5($this->request->getIPAddress() . '-forgot'), 5, MINUTE) === false) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Terlalu banyak percobaan. Coba lagi sebentar.');
+        }
+
+        if (! $this->validate(['email' => 'required|valid_email|max_length[150]'])) {
+            return redirect()->back()->withInput()->with('error', 'Masukkan email yang valid.');
+        }
+
+        $email = strtolower(trim($this->request->getPost('email')));
+        $user  = (new UserModel())->where('email', $email)->first();
+
+        // Reset status verifikasi OTP dari alur sebelumnya
+        session()->remove('resetOtpVerified');
+
+        // Respons sama baik email terdaftar maupun tidak (anti enumerasi)
+        if ($user) {
+            $this->sendOtp($email, $user['name'], 'reset');
+        }
+
+        session()->set('resetEmail', $email);
+
+        return redirect()->to(base_url('reset-password'))
+            ->with('success', 'Jika email terdaftar, kode reset sudah dikirim.');
+    }
+
+    public function reset()
+    {
+        if ($redirect = $this->redirectIfLoggedIn()) {
+            return $redirect;
+        }
+
+        $email = (string) session()->get('resetEmail');
+        if ($email === '') {
+            return redirect()->to(base_url('lupa-password'));
+        }
+
+        return view('auth/reset', [
+            'title'    => 'Reset Password',
+            'email'    => $this->maskEmail($email),
+            'wait'     => (new OtpService())->cooldownLeft($email, 'reset'),
+            'verified' => session()->get('resetOtpVerified') === $email,
+        ]);
+    }
+
+    // Verifikasi OTP — dipanggil via AJAX, balas JSON
+    public function attemptResetOtp()
+    {
+        $email = (string) session()->get('resetEmail');
+
+        if ($email === '') {
+            return $this->response->setStatusCode(400)->setJSON([
+                'ok'      => false,
+                'message' => 'Sesi habis. Ulangi dari halaman lupa password.',
+            ]);
+        }
+
+        if (service('throttler')->check(md5($this->request->getIPAddress() . '-reset'), 10, MINUTE) === false) {
+            return $this->response->setStatusCode(429)->setJSON([
+                'ok'      => false,
+                'message' => 'Terlalu banyak percobaan. Coba lagi sebentar.',
+            ]);
+        }
+
+        $otp = preg_replace('/\D/', '', (string) $this->request->getPost('otp'));
+        if (strlen($otp) !== 6) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'ok'      => false,
+                'message' => 'Masukkan 6 digit kode.',
+            ]);
+        }
+
+        $result = (new OtpService())->verify($email, 'reset', $otp);
+        if (! $result['ok']) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'ok'      => false,
+                'message' => $result['message'],
+            ]);
+        }
+
+        session()->set('resetOtpVerified', $email);
+
+        return $this->response->setJSON([
+            'ok'      => true,
+            'message' => 'Kode benar. Silakan buat password baru.',
+        ]);
+    }
+
+    // Simpan password — hanya boleh kalau OTP sudah lolos di sesi ini
+    public function attemptResetPassword()
+    {
+        $email = (string) session()->get('resetEmail');
+        if ($email === '' || session()->get('resetOtpVerified') !== $email) {
+            return redirect()->to(base_url('reset-password'))
+                ->with('error', 'Verifikasi kode dulu sebelum mengganti password.');
+        }
+
+        if (service('throttler')->check(md5($this->request->getIPAddress() . '-reset-pw'), 10, MINUTE) === false) {
+            return redirect()->back()->with('error', 'Terlalu banyak percobaan. Coba lagi sebentar.');
+        }
+
+        $rules = [
+            'password'         => 'required|min_length[8]|max_length[72]',
+            'password_confirm' => 'required|matches[password]',
+        ];
+        $messages = [
+            'password'         => ['required' => 'Password baru wajib diisi.', 'min_length' => 'Password minimal 8 karakter.'],
+            'password_confirm' => ['required' => 'Konfirmasi password wajib diisi.', 'matches' => 'Konfirmasi password tidak sama.'],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            return redirect()->back()->with('errors', $this->validator->getErrors());
+        }
+
+        db_connect()->table('users')->where('email', $email)->update([
+            'password_hash'     => password_hash((string) $this->request->getPost('password'), PASSWORD_DEFAULT),
+            'email_verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        session()->remove(['resetEmail', 'resetOtpVerified']);
+
+        return redirect()->to(base_url('masuk'))
+            ->with('success', 'Password berhasil diubah. Silakan masuk.');
+    }
+
+    public function resendReset()
+    {
+        $email = (string) session()->get('resetEmail');
+        if ($email === '') {
+            return redirect()->to(base_url('lupa-password'));
+        }
+
+        // OTP baru = verifikasi ulang
+        session()->remove('resetOtpVerified');
+
+        $user = (new UserModel())->where('email', $email)->first();
+        if ($user) {
+            $this->sendOtp($email, $user['name'], 'reset');
+        }
+
+        return redirect()->to(base_url('reset-password'))
+            ->with('success', 'Jika email terdaftar, kode baru sudah dikirim.');
     }
 
     // --------------------------------------------------------------- LOGOUT
@@ -186,6 +438,27 @@ class Auth extends BaseController
     }
 
     // -------------------------------------------------------------- HELPERS
+
+    private function sendOtp(string $email, string $name, string $purpose): bool
+    {
+        $otp    = new OtpService();
+        $result = $otp->issue($email, $purpose);
+
+        // Masih cooldown: kode sebelumnya masih berlaku, anggap berhasil
+        if (! $result['ok']) {
+            return true;
+        }
+
+        return $otp->sendMail($email, $name, $result['code'], $purpose);
+    }
+
+    private function maskEmail(string $email): string
+    {
+        [$user, $domain] = explode('@', $email) + ['', ''];
+        $visible = mb_substr($user, 0, min(2, max(1, mb_strlen($user) - 1)));
+
+        return $visible . str_repeat('•', max(2, mb_strlen($user) - mb_strlen($visible))) . '@' . $domain;
+    }
 
     private function startSession(array $user): void
     {
@@ -200,7 +473,7 @@ class Auth extends BaseController
         ]);
     }
 
-        private function homeFor(string $role): string
+    private function homeFor(string $role): string
     {
         return match ($role) {
             'organizer' => base_url('organizer/dashboard'),

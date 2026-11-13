@@ -11,7 +11,7 @@ $tabs = [
 $badge = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 'danger', 'expired' => 'secondary'];
 ?>
 
-<section class="section section-gradient">
+<section class="page-bg">
     <div class="container">
         <div class="section-head mb-4">
             <h2>Moderasi Peluang</h2>

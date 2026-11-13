@@ -7,7 +7,7 @@ $inv    = fn (string $k) => isset($errors[$k]) ? ' is-invalid' : '';
 $isFree = (int) $competition['registration_fee'] === 0;
 ?>
 
-<section class="section section-gradient">
+<section class="page-bg">
     <div class="container" style="max-width: 720px;">
 
         <a href="<?= base_url('peluang/' . $competition['id']) ?>" class="btn btn-outline-primary btn-sm mb-4">

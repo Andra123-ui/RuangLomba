@@ -8,8 +8,10 @@ $levels     = ['SD', 'SMP', 'SMA/SMK/MA', 'Mahasiswa', 'Umum'];
 $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
 ?>
 
-<h1 class="auth-title">Buat akun</h1>
-<p class="auth-sub">Gratis. Pilih peranmu, lalu isi data singkat.</p>
+<div>
+    <h1 class="auth-title">Buat akun</h1>
+    <p class="auth-sub">Gratis. Pilih peranmu, lalu isi data singkat.</p>
+</div>
 
 <?php if (session()->getFlashdata('error')): ?>
 <div class="alert alert-danger" role="alert"><?= esc(session()->getFlashdata('error')) ?></div>
@@ -25,22 +27,21 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
 </div>
 <?php endif; ?>
 
-<form action="<?= base_url('daftar') ?>" method="post" id="registerForm" novalidate>
+<form action="<?= base_url('daftar') ?>" method="post" id="registerForm" novalidate data-loading>
     <?= csrf_field() ?>
 
-    <!-- Pilihan peran -->
     <div class="role-switch" role="radiogroup" aria-label="Daftar sebagai">
+        <span class="role-pill" aria-hidden="true"></span>
         <label class="role-option">
             <input type="radio" name="role" value="participant" <?= $activeRole === 'participant' ? 'checked' : '' ?>>
-            <span>Saya Peserta</span>
+            <span><i class="fa-solid fa-user-graduate me-1"></i> Saya Peserta</span>
         </label>
         <label class="role-option">
             <input type="radio" name="role" value="organizer" <?= $activeRole === 'organizer' ? 'checked' : '' ?>>
-            <span>Saya Penyelenggara</span>
+            <span><i class="fa-solid fa-bullhorn me-1"></i> Saya Penyelenggara</span>
         </label>
     </div>
 
-    <!-- Data umum -->
     <div class="mb-3">
         <label for="name" class="form-label" id="nameLabel">Nama lengkap</label>
         <input type="text" class="form-control auth-input" id="name" name="name" value="<?= esc(old('name')) ?>"
@@ -50,10 +51,10 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
     <div class="mb-3">
         <label for="email" class="form-label">Email</label>
         <input type="email" class="form-control auth-input" id="email" name="email" value="<?= esc(old('email')) ?>"
-            autocomplete="email" required>
+            autocomplete="email" placeholder="kamu@email.com" required>
+        <div class="form-text">Kami akan mengirim kode verifikasi ke email ini.</div>
     </div>
 
-    <!-- Khusus peserta -->
     <fieldset class="role-fields" id="fields-participant">
         <div class="mb-3">
             <label for="education_level" class="form-label">Jenjang pendidikan</label>
@@ -67,7 +68,6 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
         </div>
     </fieldset>
 
-    <!-- Khusus penyelenggara -->
     <fieldset class="role-fields" id="fields-organizer">
         <div class="mb-3">
             <label for="org_type" class="form-label">Jenis penyelenggara</label>
@@ -101,7 +101,6 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
         </div>
     </fieldset>
 
-    <!-- Password -->
     <div class="mb-3">
         <label for="password" class="form-label">Password</label>
         <div class="auth-pass">
@@ -112,7 +111,8 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
                 <i class="fa-regular fa-eye" aria-hidden="true"></i>
             </button>
         </div>
-        <div class="form-text">Minimal 8 karakter.</div>
+        <div class="meter" id="meter" data-s="0"><i></i><i></i><i></i><i></i></div>
+        <div class="meter-text" id="meterText">Minimal 8 karakter.</div>
     </div>
 
     <div class="mb-4">
@@ -127,7 +127,7 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary w-100">Daftar</button>
+    <button type="submit" class="btn btn-primary w-100"><span class="spin"></span>Daftar</button>
 
     <p class="auth-terms">
         Dengan mendaftar, kamu menyetujui
@@ -151,10 +151,9 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
     var nameLabel = document.getElementById('nameLabel');
 
     function applyRole() {
-        var role = document.querySelector('input[name="role"]:checked').value;
-        var isOrg = role === 'organizer';
+        var isOrg = document.querySelector('input[name="role"]:checked').value === 'organizer';
 
-        // fieldset disabled = input di dalamnya tidak ikut terkirim & tidak divalidasi browser
+        // fieldset disabled = input di dalamnya tidak terkirim & tidak divalidasi browser
         participant.disabled = isOrg;
         organizer.disabled = !isOrg;
         participant.hidden = isOrg;
@@ -162,11 +161,28 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
 
         nameLabel.textContent = isOrg ? 'Nama penyelenggara / organisasi' : 'Nama lengkap';
     }
-
     radios.forEach(function(r) {
         r.addEventListener('change', applyRole);
     });
     applyRole();
+
+    // Indikator kekuatan password
+    var pass = document.getElementById('password');
+    var meter = document.getElementById('meter');
+    var text = document.getElementById('meterText');
+    var labels = ['Minimal 8 karakter.', 'Lemah', 'Cukup', 'Bagus', 'Kuat'];
+
+    pass.addEventListener('input', function() {
+        var v = pass.value,
+            s = 0;
+        if (v.length >= 8) s++;
+        if (/[a-z]/.test(v) && /[A-Z]/.test(v)) s++;
+        if (/\d/.test(v)) s++;
+        if (/[^A-Za-z0-9]/.test(v) || v.length >= 12) s++;
+        if (!v.length) s = 0;
+        meter.dataset.s = s;
+        text.textContent = labels[s];
+    });
 })();
 </script>
 <?= $this->endSection() ?>

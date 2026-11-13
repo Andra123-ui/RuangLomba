@@ -230,6 +230,31 @@ img { max-width: 100%; }
 .navbar-ruang .link-masuk { font-size: 14.5px; font-weight: 500; color: var(--c-black); }
 .navbar-ruang .link-masuk:hover { color: var(--c-blue); }
 
+/* Ikon lonceng notifikasi */
+.nav-bell {
+  position: relative;
+  width: 40px; height: 40px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 16px; color: var(--c-blue);
+  border: 1.5px solid var(--c-border); background: #fff;
+  transition: border-color .25s ease, background .25s ease;
+}
+.nav-bell:hover { border-color: var(--c-blue); background: var(--c-blue-dim); color: var(--c-blue); }
+
+.nav-bell-badge {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 19px; height: 19px; padding: 0 5px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 10.5px; font-weight: 700; color: #fff;
+  background: #E11D48; border: 2px solid #fff;
+}
+
+/* Mobile: lonceng jadi baris penuh dengan label */
+@media (max-width: 991.98px) {
+  .nav-bell { width: 100%; height: auto; padding: 0.6rem 1rem; border-radius: 999px; font-size: 14px; font-weight: 600; }
+  .nav-bell-badge { position: static; margin-left: 8px; }
+}
+
 @media (max-width: 991.98px) {
   .navbar-ruang .nav-link { margin: 0; padding: 0.7rem 0; border-bottom: 1px solid var(--c-border); }
 
@@ -425,6 +450,32 @@ img { max-width: 100%; }
   background: radial-gradient(circle, var(--ocean-aqua) 0%, transparent 70%);
 }
 .section-gradient .container { position: relative; z-index: 1; }
+
+/* Latar halaman dalam (bukan beranda): selalu setinggi layar + cahaya blur di sudut */
+.page-bg {
+  position: relative; overflow: hidden;
+  min-height: calc(100vh - 77px); /* 77px = tinggi navbar */
+  padding: 56px 0 96px;
+  background: linear-gradient(165deg, #FFFFFF 0%, #F0F4FE 40%, #E5EDFC 72%, #F7F9FF 100%);
+}
+.page-bg::before,
+.page-bg::after {
+  content: ''; position: absolute; border-radius: 50%; filter: blur(80px);
+  pointer-events: none; z-index: 0;
+}
+.page-bg::before {
+  width: 420px; height: 420px; top: -150px; right: -100px; opacity: 0.75;
+  background: radial-gradient(circle, var(--ocean-light) 0%, transparent 70%);
+}
+.page-bg::after {
+  width: 380px; height: 380px; bottom: -160px; left: -100px; opacity: 0.28;
+  background: radial-gradient(circle, var(--ocean-aqua) 0%, transparent 70%);
+}
+.page-bg > .container { position: relative; z-index: 1; }
+
+@media (max-width: 575.98px) {
+  .page-bg { padding: 36px 0 64px; }
+}
 
 
 /* ==========================================================================

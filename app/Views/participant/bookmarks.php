@@ -45,7 +45,7 @@
 }
 </style>
 
-<section class="section section-gradient">
+<section class="page-bg">
     <div class="container">
         <div class="section-head mb-4">
             <h2>Peluang Tersimpan</h2>

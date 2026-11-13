@@ -10,7 +10,7 @@ $statusMap = [
 $labels = ['pending' => 'Menunggu', 'verified' => 'Terverifikasi', 'rejected' => 'Ditolak'];
 ?>
 
-<section class="section section-gradient">
+<section class="page-bg">
     <div class="container">
         <div class="section-head reveal is-visible mb-4">
             <h2>Pendaftaran Saya</h2>

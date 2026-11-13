@@ -14,6 +14,11 @@ $routes->get('pendaftaran-saya', 'Participant\Registrations::index', ['filter' =
 $routes->get('tersimpan', 'Participant\Bookmarks::index', ['filter' => 'auth:participant']);
 $routes->post('peluang/(:num)/simpan', 'Participant\Bookmarks::toggle/$1', ['filter' => 'auth:participant']);
 
+// Notifikasi (semua peran)
+$routes->get('notifikasi', 'Notifications::index', ['filter' => 'auth']);
+$routes->post('notifikasi/baca-semua', 'Notifications::readAll', ['filter' => 'auth']);
+$routes->post('notifikasi/(:num)/baca', 'Notifications::read/$1', ['filter' => 'auth']);
+
 $routes->get('tentang-kami', 'Pages::tentang');
 $routes->get('syarat-ketentuan', 'Pages::syarat');
 $routes->get('kebijakan-privasi', 'Pages::privasi');
@@ -28,11 +33,22 @@ $routes->get('daftar', 'Auth::register');
 $routes->post('daftar', 'Auth::attemptRegister');
 $routes->post('keluar', 'Auth::logout');
 
+$routes->get('verifikasi', 'Auth::verify');
+$routes->post('verifikasi', 'Auth::attemptVerify');
+$routes->post('verifikasi/kirim-ulang', 'Auth::resendVerify');
+
+$routes->get('lupa-password', 'Auth::forgot');
+$routes->post('lupa-password', 'Auth::attemptForgot');
+
+$routes->get('reset-password', 'Auth::reset');
+$routes->post('reset-password', 'Auth::attemptResetOtp');
+$routes->post('reset-password/simpan', 'Auth::attemptResetPassword');
+$routes->post('reset-password/kirim-ulang', 'Auth::resendReset');
+
 // Area penyelenggara
 $routes->group('organizer', ['filter' => 'auth:organizer'], static function ($routes) {
     $routes->get('dashboard', 'Organizer\Dashboard::index');
 
-    // CRUD peluang
     $routes->get('lomba', 'Organizer\Competitions::index');
     $routes->get('lomba/baru', 'Organizer\Competitions::create');
     $routes->post('lomba', 'Organizer\Competitions::store');
@@ -40,7 +56,6 @@ $routes->group('organizer', ['filter' => 'auth:organizer'], static function ($ro
     $routes->post('lomba/(:num)', 'Organizer\Competitions::update/$1');
     $routes->post('lomba/(:num)/hapus', 'Organizer\Competitions::delete/$1');
 
-    // Pendaftar (khusus peluang dengan pendaftaran RuangLomba)
     $routes->get('lomba/(:num)/pendaftar', 'Organizer\Registrations::index/$1');
     $routes->post('pendaftar/(:num)/verifikasi', 'Organizer\Registrations::verify/$1');
     $routes->post('pendaftar/(:num)/tolak', 'Organizer\Registrations::reject/$1');

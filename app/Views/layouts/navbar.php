@@ -34,6 +34,20 @@ $userRole   = (string) session()->get('userRole');
 
             <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3">
                 <?php if ($isLoggedIn): ?>
+                <?php
+                $unreadCount = db_connect()->table('notifications')
+                    ->where('user_id', (int) session()->get('userId'))
+                    ->where('is_read', 0)
+                    ->countAllResults();
+                ?>
+                <a href="<?= base_url('notifikasi') ?>" class="nav-bell"
+                    aria-label="Notifikasi<?= $unreadCount > 0 ? ', ' . $unreadCount . ' belum dibaca' : '' ?>">
+                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                    <span class="d-lg-none ms-2">Notifikasi</span>
+                    <?php if ($unreadCount > 0): ?>
+                    <span class="nav-bell-badge"><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
+                    <?php endif; ?>
+                </a>
                 <div class="dropdown">
                     <button
                         class="btn btn-outline-primary btn-sm dropdown-toggle w-100 d-flex align-items-center justify-content-between user-menu-btn"

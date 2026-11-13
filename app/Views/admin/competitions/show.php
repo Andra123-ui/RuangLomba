@@ -9,7 +9,7 @@ $label  = ['pending' => 'Menunggu', 'approved' => 'Tayang', 'rejected' => 'Ditol
 $isExternal = ($c['registration_mode'] ?? 'external') === 'external';
 ?>
 
-<section class="section section-gradient">
+<section class="page-bg">
     <div class="container" style="max-width: 980px;">
 
         <a href="<?= base_url('admin/peluang') ?>" class="btn btn-outline-primary btn-sm mb-4">
