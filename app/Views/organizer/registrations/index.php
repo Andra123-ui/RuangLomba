@@ -28,9 +28,14 @@ $waNumber = function (string $phone): string {
                 <h1>Pendaftar</h1>
                 <p><?= esc($competition['title']) ?></p>
             </div>
-            <a href="<?= base_url('organizer/lomba') ?>" class="btn btn-outline-primary">
-                <i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i> Peluang Saya
-            </a>
+            <div class="d-flex gap-2">
+                <a href="<?= base_url('organizer/lomba/' . $competition['id'] . '/cetak-pendaftar') ?>" target="_blank" class="btn btn-outline-success">
+                    <i class="fa-solid fa-print me-1" aria-hidden="true"></i> Cetak Rekap
+                </a>
+                <a href="<?= base_url('organizer/lomba') ?>" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i> Peluang Saya
+                </a>
+            </div>
         </header>
 
         <ul class="nav nav-pills gap-2 mb-4">
@@ -69,7 +74,18 @@ $waNumber = function (string $phone): string {
                     <tr>
                         <td>
                             <div class="fw-semibold"><?= esc($r['name']) ?></div>
-                            <small class="text-secondary"><?= esc($r['email']) ?></small>
+                            <small class="text-secondary d-block"><?= esc($r['email']) ?></small>
+                            <?php if (! empty($r['team_name'])): ?>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle mt-1">
+                                <i class="fa-solid fa-users me-1"></i>Tim: <?= esc($r['team_name']) ?>
+                            </span>
+                            <?php endif; ?>
+                            <?php if (! empty($r['payment_proof'])): ?>
+                            <a href="<?= esc(media_url($r['payment_proof']), 'attr') ?>" target="_blank"
+                               class="badge bg-info-subtle text-info border text-decoration-none mt-1 d-inline-block">
+                                <i class="fa-solid fa-receipt me-1"></i>Bukti Transfer
+                            </a>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <?php if (! empty($r['phone'])): ?>

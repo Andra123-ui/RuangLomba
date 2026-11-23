@@ -12,9 +12,10 @@ class Cari extends BaseController
         $id = (int) $id;
 
         $competition = (new CompetitionModel())
-            ->select('competitions.*, categories.name AS category_name, users.name AS organizer_name, users.avatar AS organizer_logo, users.organizer_bio, users.organizer_address')
+            ->select('competitions.*, categories.name AS category_name, users.name AS organizer_name, users.avatar AS organizer_logo, users.organizer_bio, users.organizer_address, op.verification_status AS organizer_verification')
             ->join('categories', 'categories.id = competitions.category_id')
             ->join('users', 'users.id = competitions.organizer_id')
+            ->join('organizer_profiles op', 'op.user_id = competitions.organizer_id', 'left')
             ->where('competitions.id', $id)
             ->where('competitions.status', 'approved')
             ->first();
@@ -117,9 +118,10 @@ class Cari extends BaseController
 
         // Query utama
         $competitionModel
-            ->select('competitions.*, categories.name AS category_name, users.name AS organizer_name')
+            ->select('competitions.*, categories.name AS category_name, users.name AS organizer_name, op.verification_status AS organizer_verification')
             ->join('categories', 'categories.id = competitions.category_id')
             ->join('users', 'users.id = competitions.organizer_id')
+            ->join('organizer_profiles op', 'op.user_id = competitions.organizer_id', 'left')
             ->where('competitions.status', 'approved');
 
         // =========================

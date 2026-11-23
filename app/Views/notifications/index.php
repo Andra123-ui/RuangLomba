@@ -6,6 +6,7 @@
 $icons = [
     'registration'   => 'fa-clipboard-check',
     'competition'    => 'fa-bullhorn',
+    'organizer_verification' => 'fa-building-circle-check',
     'deadline'       => 'fa-clock',
     'recommendation' => 'fa-lightbulb',
 ];

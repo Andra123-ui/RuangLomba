@@ -79,6 +79,9 @@ class Notifications extends BaseController
         $role = (string) session()->get('userRole');
 
         switch ($n['type']) {
+            case 'organizer_verification':
+                return $role === 'admin' ? base_url('admin/dashboard') : null;
+
             case 'registration':
                 if ($role === 'organizer') {
                     return base_url('organizer/lomba');

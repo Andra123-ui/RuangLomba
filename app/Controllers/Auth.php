@@ -477,7 +477,7 @@ class Auth extends BaseController
     {
         return match ($role) {
             'organizer' => base_url('organizer/dashboard'),
-            'admin'     => base_url('admin/peluang'),
+            'admin'     => base_url('admin/dashboard'),
             default     => base_url('/'),
         };
     }

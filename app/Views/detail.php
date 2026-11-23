@@ -1007,13 +1007,30 @@ $orgWeb     = $links['website'] ?? '';
                                     <strong><?= date('d M Y', $deadlineTs) ?></strong>
                                 </div>
                             </li>
+                            <li>
+                                <span class="ico"><i class="fa-solid fa-users"></i></span>
+                                <div>
+                                    <small>Kepesertaan</small>
+                                    <strong>
+                                        <?= esc($competition['participation_type'] ?? 'Individu') ?>
+                                        <?php if (($competition['participation_type'] ?? 'Individu') === 'Tim' && ! empty($competition['min_members'])): ?>
+                                        (<?= (int) $competition['min_members'] ?> - <?= (int) $competition['max_members'] ?> anggota)
+                                        <?php endif; ?>
+                                    </strong>
+                                </div>
+                            </li>
                         </ul>
 
                         <div class="detail-org-mini">
                             <span class="avatar"><?= esc($orgInitial) ?></span>
                             <div>
                                 <small>Diselenggarakan oleh</small>
-                                <strong><?= esc($orgName) ?></strong>
+                                <strong>
+                                    <?= esc($orgName) ?>
+                                    <?php if (($competition['organizer_verification'] ?? '') === 'verified'): ?>
+                                    <i class="fa-solid fa-circle-check text-primary ms-1" title="Penyelenggara Terverifikasi Resmi"></i>
+                                    <?php endif; ?>
+                                </strong>
                             </div>
                         </div>
 
@@ -1109,7 +1126,14 @@ $orgWeb     = $links['website'] ?? '';
                 <h2 class="org-heading">Profile Penyelenggara</h2>
 
                 <div class="org-profile">
-                    <h3 class="org-profile-name"><?= esc($orgName) ?></h3>
+                    <h3 class="org-profile-name">
+                        <?= esc($orgName) ?>
+                        <?php if (($competition['organizer_verification'] ?? '') === 'verified'): ?>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6 ms-2 align-middle">
+                            <i class="fa-solid fa-circle-check me-1"></i> Terverifikasi Resmi
+                        </span>
+                        <?php endif; ?>
+                    </h3>
 
                     <?php if ($orgLogo !== ''): ?>
                     <img src="<?= esc($orgLogo, 'attr') ?>" alt="<?= esc($orgName) ?>" class="org-profile-logo">

@@ -3,8 +3,11 @@
 namespace App\Controllers\Organizer;
 
 use App\Controllers\BaseController;
+use App\Models\CompetitionLinkModel;
 use App\Models\CompetitionModel;
+use App\Models\OrganizerProfileModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
+use CodeIgniter\HTTP\RedirectResponse;
 
 class Competitions extends BaseController
 {
@@ -55,11 +58,19 @@ class Competitions extends BaseController
 
     public function create()
     {
+        if ($redirect = $this->verificationRequiredRedirect()) {
+            return $redirect;
+        }
+
         return view('organizer/competitions/form', $this->formData(null));
     }
 
     public function store()
     {
+        if ($redirect = $this->verificationRequiredRedirect()) {
+            return $redirect;
+        }
+
         [$data, $errors] = $this->validateInput(true);
 
         if ($errors) {
@@ -70,7 +81,10 @@ class Competitions extends BaseController
         $data['poster']       = $this->savePoster();
         $data['status']       = 'pending';
 
-        (new CompetitionModel())->insert($data);
+        $competitionId = (new CompetitionModel())->insert($data);
+        if ($competitionId) {
+            $this->saveLinks((int) $competitionId);
+        }
 
         return redirect()->to(base_url('organizer/lomba'))
             ->with('success', 'Peluang dikirim. Menunggu persetujuan admin sebelum tayang.');
@@ -80,12 +94,20 @@ class Competitions extends BaseController
 
     public function edit(int $id)
     {
-        return view('organizer/competitions/form', $this->formData($this->findOwned($id)));
+        $competition = $this->findOwned($id);
+        if ($redirect = $this->verificationRequiredRedirect()) {
+            return $redirect;
+        }
+
+        return view('organizer/competitions/form', $this->formData($competition));
     }
 
     public function update(int $id)
     {
         $competition = $this->findOwned($id);
+        if ($redirect = $this->verificationRequiredRedirect()) {
+            return $redirect;
+        }
 
         [$data, $errors] = $this->validateInput(false, $competition);
 
@@ -105,6 +127,7 @@ class Competitions extends BaseController
         }
 
         (new CompetitionModel())->update($id, $data);
+        $this->saveLinks($id);
 
         return redirect()->to(base_url('organizer/lomba'))
             ->with('success', $reviewed
@@ -130,6 +153,20 @@ class Competitions extends BaseController
     private function userId(): int
     {
         return (int) session()->get('userId');
+    }
+
+    private function verificationRequiredRedirect(): ?RedirectResponse
+    {
+        $profile = (new OrganizerProfileModel())
+            ->where('user_id', $this->userId())
+            ->first();
+
+        if (($profile['verification_status'] ?? null) === 'verified') {
+            return null;
+        }
+
+        return redirect()->to(base_url('organizer/verifikasi'))
+            ->with('error', 'Instansi harus diverifikasi admin sebelum membuat atau mengubah lomba. Ajukan verifikasi terlebih dahulu.');
     }
 
     /** Ambil peluang milik penyelenggara yang sedang login, selain itu 404 */
@@ -161,6 +198,16 @@ class Competitions extends BaseController
 
     private function formData(?array $competition): array
     {
+        $links    = [];
+        $linkUrls = [];
+        if ($competition) {
+            $dbLinks = (new CompetitionLinkModel())->where('competition_id', $competition['id'])->findAll();
+            foreach ($dbLinks as $l) {
+                $links[]    = $l['platform'];
+                $linkUrls[] = $l['url'];
+            }
+        }
+
         return [
             'title'       => $competition ? 'Ubah Peluang' : 'Tambah Peluang',
             'competition' => $competition,
@@ -171,7 +218,33 @@ class Competitions extends BaseController
             'scopes'      => self::SCOPES,
             'modes'       => self::MODES,
             'regLocked'   => $competition ? $this->isModeLocked($competition) : false,
+            'links'       => $links,
+            'linkUrls'    => $linkUrls,
         ];
+    }
+
+    private function saveLinks(int $competitionId): void
+    {
+        $linkModel = new CompetitionLinkModel();
+        $linkModel->where('competition_id', $competitionId)->delete();
+
+        $platforms = $this->request->getPost('link_platform');
+        $urls      = $this->request->getPost('link_url');
+
+        if (is_array($platforms) && is_array($urls)) {
+            foreach ($platforms as $idx => $platform) {
+                $platform = trim((string) $platform);
+                $url      = trim((string) ($urls[$idx] ?? ''));
+
+                if ($platform !== '' && filter_var($url, FILTER_VALIDATE_URL)) {
+                    $linkModel->insert([
+                        'competition_id' => $competitionId,
+                        'platform'       => $platform,
+                        'url'            => $url,
+                    ]);
+                }
+            }
+        }
     }
 
     /**
@@ -298,6 +371,9 @@ class Competitions extends BaseController
             'education_level'     => $post['education_level'] ?? '',
             'competition_level'   => $post['competition_level'] ?? '',
             'implementation_type' => $mode,
+            'participation_type'  => in_array($post['participation_type'] ?? '', ['Individu', 'Tim'], true) ? $post['participation_type'] : 'Individu',
+            'min_members'         => ($post['participation_type'] ?? '') === 'Tim' ? max(2, (int) ($post['min_members'] ?? 2)) : null,
+            'max_members'         => ($post['participation_type'] ?? '') === 'Tim' ? max(2, (int) ($post['max_members'] ?? 5)) : null,
             'location'            => $needsLocation ? trim((string) ($post['location'] ?? '')) : 'Online',
             'requirements'        => trim((string) ($post['requirements'] ?? '')) ?: null,
             'registration_mode'   => $regMode,

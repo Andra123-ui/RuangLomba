@@ -38,7 +38,7 @@ $isFree = (int) $competition['registration_fee'] === 0;
             </div>
             <?php endif; ?>
 
-            <form action="<?= base_url('peluang/' . $competition['id'] . '/daftar') ?>" method="post" novalidate>
+            <form action="<?= base_url('peluang/' . $competition['id'] . '/daftar') ?>" method="post" enctype="multipart/form-data" novalidate>
                 <?= csrf_field() ?>
 
                 <div class="row g-3">
@@ -54,8 +54,32 @@ $isFree = (int) $competition['registration_fee'] === 0;
                             readonly>
                     </div>
 
+                    <?php if (($competition['participation_type'] ?? 'Individu') === 'Tim'): ?>
                     <div class="col-12">
-                        <label for="phone" class="form-label">Nomor HP</label>
+                        <label for="team_id" class="form-label fw-semibold">Pilih Tim Kamu <span class="badge bg-primary ms-1">Kompetisi Beregu</span></label>
+                        <?php if (empty($teams)): ?>
+                        <div class="alert alert-warning mb-2 py-2 small">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i> Kamu belum memiliki tim sebagai ketua. Buat tim terlebih dahulu di menu <strong>Tim Saya</strong>.
+                        </div>
+                        <a href="<?= base_url('tim') ?>" target="_blank" class="btn btn-outline-primary btn-sm mb-2">
+                            <i class="fa-solid fa-plus me-1"></i> Buka Menu Tim Saya
+                        </a>
+                        <?php else: ?>
+                        <select class="form-select auth-input<?= $inv('team_id') ?>" id="team_id" name="team_id" required>
+                            <option value="">-- Pilih Tim yang Akan Didaftarkan --</option>
+                            <?php foreach ($teams as $t): ?>
+                            <option value="<?= (int) $t['id'] ?>" <?= (string) old('team_id') === (string) $t['id'] ? 'selected' : '' ?>>
+                                <?= esc($t['name']) ?> (Kode: <?= esc($t['join_code']) ?>)
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text small">Sebagai ketua tim, seluruh anggota timmu akan otomatis terdaftar dalam kompetisi ini.</div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="col-12">
+                        <label for="phone" class="form-label">Nomor HP / WhatsApp</label>
                         <input type="tel" class="form-control auth-input<?= $inv('phone') ?>" id="phone" name="phone"
                             value="<?= esc(old('phone')) ?>" placeholder="081234567890" required>
                     </div>
@@ -66,6 +90,15 @@ $isFree = (int) $competition['registration_fee'] === 0;
                             name="institution" value="<?= esc(old('institution')) ?>" maxlength="150"
                             placeholder="Contoh: SMAN 1 Surabaya" required>
                     </div>
+
+                    <?php if (! $isFree): ?>
+                    <div class="col-12">
+                        <label for="payment_proof" class="form-label fw-semibold">Bukti Pembayaran / Transfer</label>
+                        <input type="file" class="form-control auth-input<?= $inv('payment_proof') ?>" id="payment_proof" name="payment_proof"
+                            accept="image/jpeg,image/png,image/webp" required>
+                        <div class="form-text small">Format JPG, PNG, atau WebP. Maks 2 MB. Pastikan bukti transfer terlihat jelas.</div>
+                    </div>
+                    <?php endif; ?>
 
                     <div class="col-12">
                         <div class="form-check">

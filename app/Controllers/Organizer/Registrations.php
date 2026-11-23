@@ -28,8 +28,9 @@ class Registrations extends BaseController
         $db = db_connect();
 
         $builder = $db->table('registrations r')
-            ->select('r.*, u.name, u.email')
+            ->select('r.*, u.name, u.email, t.name AS team_name')
             ->join('users u', 'u.id = r.user_id')
+            ->join('teams t', 't.id = r.team_id', 'left')
             ->where('r.competition_id', $competitionId)
             ->orderBy("r.status = 'pending'", 'DESC', false) // yang perlu ditindak di atas
             ->orderBy('r.registered_at', 'DESC');
@@ -54,6 +55,26 @@ class Registrations extends BaseController
             'registrations' => $builder->get()->getResultArray(),
             'status'        => $status,
             'counts'        => $counts,
+        ]);
+    }
+
+    public function printList(int $competitionId)
+    {
+        $competition = $this->findOwnedCompetition($competitionId);
+        $db = db_connect();
+
+        $rows = $db->table('registrations r')
+            ->select('r.*, u.name, u.email, t.name AS team_name')
+            ->join('users u', 'u.id = r.user_id')
+            ->join('teams t', 't.id = r.team_id', 'left')
+            ->where('r.competition_id', $competitionId)
+            ->orderBy('r.registered_at', 'ASC')
+            ->get()->getResultArray();
+
+        return view('organizer/registrations/print_list', [
+            'title'         => 'Rekap Pendaftar - ' . $competition['title'],
+            'competition'   => $competition,
+            'registrations' => $rows,
         ]);
     }
 
@@ -157,6 +178,10 @@ class Registrations extends BaseController
         $db->transStart();
 
         $db->table('registrations')->where('id', $reg['id'])->update($fields);
+
+        if (($fields['status'] ?? '') === 'verified') {
+            $db->query("UPDATE `users` SET `points` = `points` + 50 WHERE `id` = ?", [(int) $reg['user_id']]);
+        }
 
         $db->table('notifications')->insert([
             'user_id' => (int) $reg['user_id'],

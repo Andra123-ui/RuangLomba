@@ -23,6 +23,10 @@ $userRole   = (string) session()->get('userRole');
                         href="<?= base_url('cari') ?>">Jelajahi Peluang</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= $current === 'leaderboard' ? 'active' : '' ?>"
+                        href="<?= base_url('leaderboard') ?>">Leaderboard</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= $current === 'untuk-organizer' ? 'active' : '' ?>"
                         href="<?= base_url('untuk-organizer') ?>">Organizer</a>
                 </li>
@@ -61,8 +65,18 @@ $userRole   = (string) session()->get('userRole');
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenuButton">
                         <?php if ($userRole === 'admin'): ?>
                         <li>
+                            <a class="dropdown-item" href="<?= base_url('admin/dashboard') ?>">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+                            </a>
+                        </li>
+                        <li>
                             <a class="dropdown-item" href="<?= base_url('admin/peluang') ?>">
                                 <i class="fa-solid fa-shield-halved fa-fw me-2"></i>Moderasi Peluang
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?= base_url('admin/organizer') ?>">
+                                <i class="fa-solid fa-certificate fa-fw me-2"></i>Verifikasi Organizer
                             </a>
                         </li>
                         <li>
@@ -95,6 +109,16 @@ $userRole   = (string) session()->get('userRole');
                         <li>
                             <a class="dropdown-item" href="<?= base_url('tersimpan') ?>">
                                 <i class="fa-solid fa-heart fa-fw me-2"></i>Peluang Tersimpan
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?= base_url('profil') ?>">
+                                <i class="fa-solid fa-user-gear fa-fw me-2"></i>Profil &amp; Preferensi
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?= base_url('tim') ?>">
+                                <i class="fa-solid fa-users-gear fa-fw me-2"></i>Tim Saya
                             </a>
                         </li>
                         <li>

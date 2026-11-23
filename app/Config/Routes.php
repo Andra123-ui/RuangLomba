@@ -6,13 +6,21 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 $routes->get('cari', 'Cari::index');
+$routes->get('leaderboard', 'Leaderboard::index');
 
 $routes->get('peluang/(:num)', 'Cari::detail/$1');
 $routes->get('peluang/(:num)/daftar', 'Participant\Registrations::form/$1', ['filter' => 'auth:participant']);
 $routes->post('peluang/(:num)/daftar', 'Participant\Registrations::store/$1', ['filter' => 'auth:participant']);
 $routes->get('pendaftaran-saya', 'Participant\Registrations::index', ['filter' => 'auth:participant']);
+$routes->get('pendaftaran/(:num)/cetak', 'Participant\Registrations::printCard/$1', ['filter' => 'auth:participant']);
 $routes->get('tersimpan', 'Participant\Bookmarks::index', ['filter' => 'auth:participant']);
 $routes->post('peluang/(:num)/simpan', 'Participant\Bookmarks::toggle/$1', ['filter' => 'auth:participant']);
+$routes->get('profil', 'Participant\Profile::index', ['filter' => 'auth:participant']);
+$routes->post('profil', 'Participant\Profile::update', ['filter' => 'auth:participant']);
+$routes->get('tim', 'Participant\Teams::index', ['filter' => 'auth:participant']);
+$routes->post('tim/buat', 'Participant\Teams::create', ['filter' => 'auth:participant']);
+$routes->post('tim/gabung', 'Participant\Teams::join', ['filter' => 'auth:participant']);
+$routes->post('tim/(:num)/keluar', 'Participant\Teams::leave/$1', ['filter' => 'auth:participant']);
 
 // Notifikasi (semua peran)
 $routes->get('notifikasi', 'Notifications::index', ['filter' => 'auth']);
@@ -57,14 +65,25 @@ $routes->group('organizer', ['filter' => 'auth:organizer'], static function ($ro
     $routes->post('lomba/(:num)/hapus', 'Organizer\Competitions::delete/$1');
 
     $routes->get('lomba/(:num)/pendaftar', 'Organizer\Registrations::index/$1');
+    $routes->get('lomba/(:num)/cetak-pendaftar', 'Organizer\Registrations::printList/$1');
     $routes->post('pendaftar/(:num)/verifikasi', 'Organizer\Registrations::verify/$1');
     $routes->post('pendaftar/(:num)/tolak', 'Organizer\Registrations::reject/$1');
+
+    $routes->get('verifikasi', 'Organizer\Verification::index');
+    $routes->post('verifikasi', 'Organizer\Verification::submit');
 });
 
 // Area admin
 $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes) {
+    $routes->get('dashboard', 'Admin\Dashboard::index');
+
     $routes->get('peluang', 'Admin\Competitions::index');
     $routes->get('peluang/(:num)', 'Admin\Competitions::show/$1');
     $routes->post('peluang/(:num)/setujui', 'Admin\Competitions::approve/$1');
     $routes->post('peluang/(:num)/tolak', 'Admin\Competitions::reject/$1');
+
+    $routes->get('organizer', 'Admin\Organizers::index');
+    $routes->get('organizer/(:num)', 'Admin\Organizers::show/$1');
+    $routes->post('organizer/(:num)/verifikasi', 'Admin\Organizers::verify/$1');
+    $routes->post('organizer/(:num)/tolak', 'Admin\Organizers::reject/$1');
 });

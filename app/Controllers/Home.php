@@ -3,12 +3,17 @@
 namespace App\Controllers;
 
 use App\Models\CompetitionModel;
+use App\Models\PreferenceInterestModel;
+use App\Models\PreferenceSkillModel;
+use App\Models\UserPreferenceModel;
 
 class Home extends BaseController
 {
     public function index(): string
     {
         $isLoggedIn = (bool) session()->get('isLoggedIn');
+
+        $userId     = (int) session()->get('userId');
 
         $data = [
             'title'                  => 'Beranda',
@@ -17,6 +22,7 @@ class Home extends BaseController
             'opportunity_categories' => $this->getTypes(),
             'featured_opportunities' => $this->getFeatured(3),
             'interest_categories'    => $this->getInterests(8),
+            'lomba_match'            => $isLoggedIn ? $this->getLombaMatch($userId) : null,
         ];
 
         return view('home', $data);
@@ -37,6 +43,9 @@ class Home extends BaseController
             'active'     => $fmt($db->table('competitions')
                                 ->where('status', 'approved')
                                 ->where('deadline >=', $now)
+                                ->countAllResults()),
+            'verified_registrations' => $fmt($db->table('registrations')
+                                ->where('status', 'verified')
                                 ->countAllResults()),
         ];
     }
@@ -147,5 +156,134 @@ class Home extends BaseController
         }
 
         return $result;
+    }
+
+    /**
+     * LombaMatch AI: Rekomendasi dinamis berbasis skor kecocokan minat, jenjang, mode, dan keahlian
+     */
+    private function getLombaMatch(int $userId): array
+    {
+        $prefModel = new UserPreferenceModel();
+        $pref = $prefModel->where('user_id', $userId)->first();
+
+        $interestNames = [];
+        $skillNames    = [];
+
+        if ($pref) {
+            $interestModel = new PreferenceInterestModel();
+            $interestRows  = $interestModel->where('user_preference_id', $pref['id'])->findAll();
+            $interestNames = array_column($interestRows, 'interest_name');
+
+            $skillModel    = new PreferenceSkillModel();
+            $skillRows     = $skillModel->where('user_preference_id', $pref['id'])->findAll();
+            $skillNames    = array_column($skillRows, 'skill_name');
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $competitions = (new CompetitionModel())
+            ->select('competitions.*, categories.name AS category_name, users.name AS organizer_name')
+            ->join('categories', 'categories.id = competitions.category_id')
+            ->join('users', 'users.id = competitions.organizer_id')
+            ->where('competitions.status', 'approved')
+            ->where('competitions.deadline >=', $now)
+            ->findAll();
+
+        $userLevel = $pref['preferred_level'] ?? null;
+        $userMode  = $pref['preferred_mode'] ?? null;
+        $userFee   = $pref['preferred_fee'] ?? 'Tidak Masalah';
+
+        $hasPrefs = ! empty($interestNames) || ! empty($skillNames) || ! empty($userLevel);
+
+        $maxBase = 7 + (2 * max(1, count($skillNames)));
+        $scored = [];
+
+        foreach ($competitions as $c) {
+            $score = 0;
+
+            // 1. Minat / Kategori (+3 poin)
+            if (! empty($interestNames) && in_array($c['category_name'], $interestNames, true)) {
+                $score += 3;
+            }
+
+            // 2. Jenjang (+2 poin)
+            if ($userLevel) {
+                if ($c['education_level'] === $userLevel || $c['education_level'] === 'Umum') {
+                    $score += 2;
+                }
+            } else {
+                $score += 1;
+            }
+
+            // 3. Mode Pelaksanaan (+1 poin)
+            if (! empty($userMode) && $userMode !== 'Tidak Masalah') {
+                if ($c['implementation_type'] === $userMode || $c['implementation_type'] === 'Hybrid') {
+                    $score += 1;
+                }
+            } else {
+                $score += 1;
+            }
+
+            // 4. Biaya Pendaftaran (+1 poin)
+            if ($userFee === 'Gratis' && (int) $c['registration_fee'] === 0) {
+                $score += 1;
+            } elseif ($userFee === 'Berbayar' && (int) $c['registration_fee'] > 0) {
+                $score += 1;
+            } elseif ($userFee === 'Tidak Masalah') {
+                $score += 1;
+            }
+
+            // 5. Keahlian (+2 poin per skill yang muncul di judul atau deskripsi)
+            $matchedSkills = [];
+            foreach ($skillNames as $skill) {
+                if ($skill === '') continue;
+                if (
+                    stripos($c['title'], $skill) !== false ||
+                    stripos($c['description'], $skill) !== false ||
+                    (! empty($c['requirements']) && stripos($c['requirements'], $skill) !== false)
+                ) {
+                    $score += 2;
+                    $matchedSkills[] = $skill;
+                }
+            }
+
+            // Hitung persentase kecocokan (antara 65% - 98%)
+            $pct = $hasPrefs
+                ? min(98, max(65, (int) round(($score / $maxBase) * 100)))
+                : 85;
+
+            $deadlineTs = strtotime($c['deadline']);
+            $daysLeft   = (int) floor(($deadlineTs - strtotime('today')) / 86400);
+
+            $scored[] = [
+                'id'                 => $c['id'],
+                'title'              => $c['title'],
+                'type'               => $c['type'],
+                'category_name'      => $c['category_name'],
+                'implementation_type'=> $c['implementation_type'],
+                'registration_fee'   => (int) $c['registration_fee'],
+                'fee_label'          => (int) $c['registration_fee'] === 0 ? 'Gratis' : 'Rp ' . number_format($c['registration_fee'], 0, ',', '.'),
+                'education_level'    => $c['education_level'],
+                'organizer_name'     => $c['organizer_name'] ?? '-',
+                'poster'             => media_url($c['poster']),
+                'days_left'          => $daysLeft,
+                'score'              => $score,
+                'pct'                => $pct,
+                'matched_skills'     => $matchedSkills,
+            ];
+        }
+
+        // Urutkan berdasarkan score tertinggi
+        usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
+        $top = array_slice($scored, 0, 3);
+
+        return [
+            'has_preferences' => $hasPrefs,
+            'interests_text'  => ! empty($interestNames) ? implode(' · ', $interestNames) : 'Semua Bidang',
+            'skills_text'     => ! empty($skillNames) ? implode(' · ', $skillNames) : 'Belum diisi',
+            'fee_text'        => $userFee,
+            'mode_text'       => $userMode ?: 'Semua Mode',
+            'level_text'      => $userLevel ?: 'Semua Jenjang',
+            'matches'         => $top,
+        ];
     }
 }

@@ -73,8 +73,16 @@ $labels = ['pending' => 'Menunggu', 'verified' => 'Terverifikasi', 'rejected' =>
                             <?php endif; ?>
                         </td>
                         <td class="text-end">
-                            <a href="<?= base_url('peluang/' . $r['competition_id']) ?>"
-                                class="btn btn-sm btn-outline-primary">Lihat</a>
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="<?= base_url('peluang/' . $r['competition_id']) ?>"
+                                    class="btn btn-sm btn-outline-primary">Lihat</a>
+                                <?php if ($r['status'] === 'verified'): ?>
+                                <a href="<?= base_url('pendaftaran/' . $r['id'] . '/cetak') ?>" target="_blank"
+                                    class="btn btn-sm btn-success" title="Cetak Bukti Pendaftaran">
+                                    <i class="fa-solid fa-print me-1"></i> Cetak
+                                </a>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>

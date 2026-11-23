@@ -39,12 +39,7 @@ $interestIcons = [
 ];
 $interestIconDefault = 'fa-star';
 
-// Testimoni sementara statis. Ganti dengan data controller ($testimonials) bila tabelnya sudah ada.
-$testimonials = $testimonials ?? [
-    ['name' => 'Nama Pengguna 1', 'role' => 'Siswa SMA · Surabaya',   'quote' => 'Isi testimoni pengguna pertama di sini.', 'rating' => 5],
-    ['name' => 'Nama Pengguna 2', 'role' => 'Mahasiswa · Universitas', 'quote' => 'Isi testimoni pengguna kedua di sini.',   'rating' => 5],
-    ['name' => 'Nama Pengguna 3', 'role' => 'Penyelenggara Lomba',     'quote' => 'Isi testimoni pengguna ketiga di sini.',  'rating' => 5],
-];
+$howFeatured = $featured_opportunities[0] ?? null;
 ?>
 
 <!-- ==========================================================================
@@ -244,47 +239,99 @@ $testimonials = $testimonials ?? [
 <!-- ==========================================================================
      4. LOMBAMATCH AI — hanya untuk user yang sudah login
      ========================================================================== -->
-<?php if ($isLoggedIn): ?>
+<?php if ($isLoggedIn && ! empty($lomba_match)): ?>
 <section class="section pt-0" id="lombamatch">
     <div class="container">
-        <div class="match-section reveal">
-            <div class="row g-5 align-items-center">
+        <div class="match-section match-showcase reveal">
+            <div class="row g-4 g-xl-5 align-items-center">
                 <div class="col-lg-6 match-copy">
-                    <h2>Bingung memilih lomba?<br>Temukan lomba yang cocok untukmu dengan
-                        <span class="accent accent-light">LombaMatch AI</span>.
-                    </h2>
-                    <p>Ceritakan minat dan keahlianmu, dan kami bantu tunjukkan peluang yang paling relevan denganmu.
-                    </p>
+                    <span class="match-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> Rekomendasi personal</span>
+                    <h2>Lebih dekat dengan peluang yang tepat.</h2>
+                    <p>LombaMatch AI menyusun rekomendasi dari minat, keahlian, jenjang, dan preferensi yang kamu atur—agar pencarian terasa lebih terarah.</p>
+
+                    <div class="match-benefits">
+                        <div><i class="fa-solid fa-circle-check"></i> Disesuaikan dengan preferensimu</div>
+                        <div><i class="fa-solid fa-circle-check"></i> Hanya menampilkan peluang aktif</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <a href="<?= base_url('profil') ?>" class="btn btn-light btn-sm">
+                            <i class="fa-solid fa-sliders me-1"></i> Atur preferensi
+                        </a>
+                        <a href="<?= base_url('cari') ?>" class="btn btn-outline-light btn-sm">
+                            <i class="fa-solid fa-arrow-right me-1"></i> Lihat semua peluang
+                        </a>
+                    </div>
                 </div>
 
                 <div class="col-lg-6">
-                    <div class="match-panel">
-                        <div class="match-field">
-                            <div class="label">Minat</div>
-                            <div class="value">Desain Grafis &middot; UI/UX</div>
-                        </div>
-                        <div class="match-field">
-                            <div class="label">Keahlian</div>
-                            <div class="value">Figma &middot; Photoshop</div>
-                        </div>
-                        <div class="match-field">
-                            <div class="label">Biaya</div>
-                            <div class="value">Gratis</div>
-                        </div>
-                        <div class="match-field">
-                            <div class="label">Mode</div>
-                            <div class="value">Online</div>
-                        </div>
-
-                        <a href="#" class="btn btn-primary">Temukan Lomba</a>
-
-                        <div class="match-result" style="display:none;">
-                            <span class="match-result-badge">Direkomendasikan</span>
+                    <div class="match-board">
+                        <div class="match-board-head">
                             <div>
-                                <div class="match-result-title">UI/UX Design Competition</div>
-                                <div class="match-result-meta">UI/UX &amp; Design &middot; Online &middot; Gratis</div>
+                                <span class="match-board-kicker">Profil kecocokan</span>
+                                <h3>Preferensimu</h3>
+                            </div>
+                            <span class="match-board-icon"><i class="fa-solid fa-sliders"></i></span>
+                        </div>
+
+                        <div class="match-preferences">
+                            <div class="match-preference">
+                                <span><i class="fa-solid fa-heart"></i> Minat</span>
+                                <strong><?= esc($lomba_match['interests_text']) ?></strong>
+                            </div>
+                            <div class="match-preference">
+                                <span><i class="fa-solid fa-graduation-cap"></i> Jenjang</span>
+                                <strong><?= esc($lomba_match['level_text']) ?></strong>
+                            </div>
+                            <div class="match-preference">
+                                <span><i class="fa-solid fa-laptop"></i> Mode</span>
+                                <strong><?= esc($lomba_match['mode_text']) ?></strong>
+                            </div>
+                            <div class="match-preference">
+                                <span><i class="fa-solid fa-wallet"></i> Biaya</span>
+                                <strong><?= esc($lomba_match['fee_text']) ?></strong>
                             </div>
                         </div>
+
+                        <div class="match-recommendation-head">
+                            <div>
+                                <h4>Rekomendasi untukmu</h4>
+                                <p><?= ! empty($lomba_match['has_preferences']) ? 'Diurutkan berdasarkan kecocokan profil' : 'Atur preferensi untuk hasil yang lebih personal' ?></p>
+                            </div>
+                            <span class="match-count"><?= count($lomba_match['matches']) ?> pilihan</span>
+                        </div>
+
+                        <?php if (! empty($lomba_match['matches'])): ?>
+                            <div class="match-results">
+                                <?php foreach ($lomba_match['matches'] as $m): ?>
+                                <a href="<?= base_url('peluang/' . $m['id']) ?>" class="match-result">
+                                    <span class="match-result-thumb">
+                                        <?php if (! empty($m['poster'])): ?>
+                                        <img src="<?= esc($m['poster'], 'attr') ?>" alt="" loading="lazy">
+                                        <?php else: ?>
+                                        <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+                                        <?php endif; ?>
+                                    </span>
+                                    <span class="match-result-content">
+                                        <strong class="match-result-title"><?= esc($m['title']) ?></strong>
+                                        <span class="match-result-meta"><?= esc($m['category_name']) ?> · <?= esc($m['implementation_type']) ?> · <?= esc($m['fee_label']) ?></span>
+                                        <?php if (! empty($m['matched_skills'])): ?>
+                                        <span class="match-skill-match"><i class="fa-solid fa-check"></i> Keahlian cocok: <?= esc(implode(', ', $m['matched_skills'])) ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                    <span class="match-result-score">
+                                        <?= ! empty($lomba_match['has_preferences']) ? (int) $m['pct'] . '%' : 'Aktif' ?>
+                                        <small><?= ! empty($lomba_match['has_preferences']) ? 'cocok' : 'peluang' ?></small>
+                                    </span>
+                                </a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="match-empty">
+                                <i class="fa-solid fa-compass"></i>
+                                Belum ada lomba yang sedang aktif sesuai filter saat ini.
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -345,50 +392,99 @@ $testimonials = $testimonials ?? [
     <div class="container">
         <div class="section-head reveal">
             <h2>Mulai dalam tiga langkah.</h2>
+            <p>Dari menemukan kesempatan sampai siap mendaftar, semuanya dimulai di RuangLomba.</p>
         </div>
 
-        <div class="row steps-layout align-items-center g-5">
-            <div class="col-lg-5 steps-list reveal">
-                <div class="step-item" data-step="1">
-                    <span class="step-item-num">01</span>
-                    <div>
-                        <h3>Temukan</h3>
-                        <p>Jelajahi peluang yang sesuai denganmu.</p>
-                    </div>
-                </div>
-                <div class="step-item" data-step="2">
-                    <span class="step-item-num">02</span>
-                    <div>
-                        <h3>Pilih</h3>
-                        <p>Periksa detail, deadline, biaya, dan persyaratannya.</p>
-                    </div>
-                </div>
-                <div class="step-item" data-step="3">
-                    <span class="step-item-num">03</span>
-                    <div>
-                        <h3>Daftar</h3>
-                        <p>Ikuti instruksi pendaftaran dari penyelenggara.</p>
-                    </div>
+        <div class="row how-layout g-4 align-items-stretch">
+            <div class="col-lg-5 reveal">
+                <div class="how-steps" role="tablist" aria-label="Cara menggunakan RuangLomba" data-how-tabs>
+                    <button class="how-step is-active" id="how-step-0" type="button" role="tab"
+                        aria-selected="true" aria-controls="how-panel-0" tabindex="0" data-how-tab="0">
+                        <span class="how-step-index">01</span>
+                        <span class="how-step-copy">
+                            <strong>Jelajahi peluang</strong>
+                            <span>Telusuri lomba, beasiswa, webinar, dan lainnya.</span>
+                        </span>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                    <button class="how-step" id="how-step-1" type="button" role="tab"
+                        aria-selected="false" aria-controls="how-panel-1" tabindex="-1" data-how-tab="1">
+                        <span class="how-step-index">02</span>
+                        <span class="how-step-copy">
+                            <strong>Pilih yang paling pas</strong>
+                            <span>Cek deadline, biaya, jenjang, dan syaratnya.</span>
+                        </span>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                    <button class="how-step" id="how-step-2" type="button" role="tab"
+                        aria-selected="false" aria-controls="how-panel-2" tabindex="-1" data-how-tab="2">
+                        <span class="how-step-index">03</span>
+                        <span class="how-step-copy">
+                            <strong>Siapkan pendaftaran</strong>
+                            <span>Ikuti panduan pendaftaran dari penyelenggara.</span>
+                        </span>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
 
-            <div class="col-lg-7 steps-visual reveal reveal-delay-2">
-                <div class="steps-mock">
-                    <div class="mock-search">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        Cari lomba, beasiswa, webinar...
-                    </div>
-
-                    <div class="mock-card">
-                        <div class="mock-card-thumb"></div>
-                        <div class="mock-card-body">
-                            <span class="mock-tag">Lomba</span>
-                            <div class="mock-title">UI/UX Design Competition</div>
-                            <div class="mock-meta">Online &middot; Gratis &middot; Deadline 30 Sep 2026</div>
+            <div class="col-lg-7 reveal reveal-delay-2">
+                <div class="how-preview" aria-live="polite">
+                    <div class="how-panel is-active" id="how-panel-0" role="tabpanel"
+                        aria-labelledby="how-step-0" tabindex="0" data-how-panel="0">
+                        <span class="how-panel-eyebrow">Langkah 1 · Jelajahi</span>
+                        <h3>Semua peluang, satu pencarian.</h3>
+                        <p>Gunakan kategori dan filter untuk mempersempit pilihanmu.</p>
+                        <div class="how-search-preview">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Cari lomba, beasiswa, webinar...</span>
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+                        <div class="how-filter-chips">
+                            <span><i class="fa-solid fa-trophy"></i> Lomba</span>
+                            <span><i class="fa-solid fa-graduation-cap"></i> Beasiswa</span>
+                            <span><i class="fa-solid fa-display"></i> Webinar</span>
                         </div>
                     </div>
 
-                    <div class="mock-btn">Daftar Sekarang</div>
+                    <div class="how-panel" id="how-panel-1" role="tabpanel"
+                        aria-labelledby="how-step-1" tabindex="0" data-how-panel="1" hidden>
+                        <span class="how-panel-eyebrow">Langkah 2 · Pilih</span>
+                        <h3>Periksa detail sebelum memutuskan.</h3>
+                        <p>Lihat informasi penting dan pastikan peluang sesuai dengan kebutuhanmu.</p>
+                        <?php if ($howFeatured): ?>
+                        <a href="<?= base_url('peluang/' . $howFeatured['id']) ?>" class="how-opportunity">
+                            <span class="how-opportunity-image">
+                                <?php if (! empty($howFeatured['image'])): ?>
+                                <img src="<?= esc($howFeatured['image'], 'attr') ?>" alt="" loading="lazy">
+                                <?php else: ?>
+                                <i class="fa-solid fa-trophy"></i>
+                                <?php endif; ?>
+                            </span>
+                            <span class="how-opportunity-info">
+                                <span class="how-opportunity-type"><?= esc($howFeatured['type']) ?></span>
+                                <strong><?= esc($howFeatured['title']) ?></strong>
+                                <span><?= esc($howFeatured['lokasi']) ?> · <?= esc($howFeatured['harga']) ?></span>
+                                <span><?= esc($howFeatured['tanggal']) ?></span>
+                            </span>
+                            <i class="fa-solid fa-arrow-up-right-from-square how-opportunity-arrow"></i>
+                        </a>
+                        <?php else: ?>
+                        <div class="how-no-opportunity">Peluang terbaru akan tampil di sini setelah disetujui admin.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="how-panel" id="how-panel-2" role="tabpanel"
+                        aria-labelledby="how-step-2" tabindex="0" data-how-panel="2" hidden>
+                        <span class="how-panel-eyebrow">Langkah 3 · Daftar</span>
+                        <div class="how-ready-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                        <h3>Kesempatan berikutnya bisa jadi milikmu.</h3>
+                        <p>Ikuti cara pendaftaran yang tertera pada detail peluang dan pantau statusmu.</p>
+                        <a href="<?= base_url($isLoggedIn ? 'cari' : 'daftar') ?>" class="btn btn-primary">
+                            <?= $isLoggedIn ? 'Cari peluang sekarang' : 'Mulai sebagai peserta' ?>
+                            <i class="fa-solid fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -401,38 +497,97 @@ $testimonials = $testimonials ?? [
 <section class="section section-gradient" id="testimoni">
     <div class="container">
         <div class="section-head reveal">
-            <h2>Kata mereka tentang RuangLomba.</h2>
-            <p>Cerita dari pelajar dan penyelenggara yang sudah menemukan peluangnya.</p>
+            <span class="proof-eyebrow"><i class="fa-solid fa-chart-line"></i> Aktivitas nyata</span>
+            <h2>Dampak RuangLomba, dari data yang berjalan.</h2>
+            <p>Statistik komunitas di bawah ini diambil langsung dari aktivitas platform.</p>
         </div>
 
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            <?php foreach ($testimonials as $i => $t): ?>
+        <?php
+        $proofStats = [
+            [
+                'icon'  => 'fa-user-graduate',
+                'value' => $stats['users'],
+                'label' => 'Peserta terdaftar',
+                'hint'  => 'Akun peserta di RuangLomba',
+            ],
+            [
+                'icon'  => 'fa-bullseye',
+                'value' => $stats['active'],
+                'label' => 'Peluang aktif',
+                'hint'  => 'Sudah disetujui dan belum melewati deadline',
+            ],
+            [
+                'icon'  => 'fa-circle-check',
+                'value' => $stats['verified_registrations'],
+                'label' => 'Pendaftaran terverifikasi',
+                'hint'  => 'Dikonfirmasi oleh penyelenggara',
+            ],
+        ];
+        ?>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <?php foreach ($proofStats as $i => $proof): ?>
             <div class="col">
-                <figure class="card card-ruang testi-card h-100 reveal reveal-delay-<?= ($i % 3) + 1 ?>">
-                    <div class="card-body">
-                        <div class="testi-stars" aria-label="Rating <?= (int) $t['rating'] ?> dari 5">
-                            <?php for ($s = 1; $s <= 5; $s++): ?>
-                            <i class="fa-solid fa-star <?= $s <= (int) $t['rating'] ? 'on' : '' ?>"
-                                aria-hidden="true"></i>
-                            <?php endfor; ?>
-                        </div>
-
-                        <blockquote class="testi-quote">&ldquo;<?= esc($t['quote']) ?>&rdquo;</blockquote>
-
-                        <figcaption class="testi-author">
-                            <span class="testi-avatar"><?= esc(mb_strtoupper(mb_substr($t['name'], 0, 1))) ?></span>
-                            <div>
-                                <div class="testi-name"><?= esc($t['name']) ?></div>
-                                <div class="testi-role"><?= esc($t['role']) ?></div>
-                            </div>
-                        </figcaption>
-                    </div>
-                </figure>
+                <article class="proof-card reveal reveal-delay-<?= $i + 1 ?>">
+                    <span class="proof-card-icon"><i class="fa-solid <?= esc($proof['icon'], 'attr') ?>"></i></span>
+                    <span class="proof-card-value"><?= esc($proof['value']) ?></span>
+                    <h3><?= esc($proof['label']) ?></h3>
+                    <p><?= esc($proof['hint']) ?></p>
+                    <span class="proof-card-source"><i class="fa-solid fa-database"></i> Data langsung RuangLomba</span>
+                </article>
             </div>
             <?php endforeach; ?>
         </div>
+
+        <p class="proof-note"><i class="fa-solid fa-circle-info me-1"></i> RuangLomba belum menyimpan kutipan testimoni pengguna. Bagian ini menampilkan angka aktivitas asli, bukan ulasan yang dibuat-buat.</p>
     </div>
 </section>
+
+<script>
+(function() {
+    var tablist = document.querySelector('[data-how-tabs]');
+    if (!tablist) return;
+
+    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[data-how-tab]'));
+    var panels = Array.prototype.slice.call(document.querySelectorAll('[data-how-panel]'));
+
+    function activate(index, moveFocus) {
+        tabs.forEach(function(tab, i) {
+            var active = i === index;
+            tab.classList.toggle('is-active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
+            tab.setAttribute('tabindex', active ? '0' : '-1');
+            panels[i].classList.toggle('is-active', active);
+            panels[i].hidden = !active;
+        });
+
+        if (moveFocus) tabs[index].focus();
+    }
+
+    tabs.forEach(function(tab, index) {
+        tab.addEventListener('click', function() {
+            activate(index, false);
+        });
+
+        tab.addEventListener('keydown', function(event) {
+            var nextIndex = index;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                nextIndex = (index + 1) % tabs.length;
+            } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                nextIndex = (index - 1 + tabs.length) % tabs.length;
+            } else if (event.key === 'Home') {
+                nextIndex = 0;
+            } else if (event.key === 'End') {
+                nextIndex = tabs.length - 1;
+            } else {
+                return;
+            }
+
+            event.preventDefault();
+            activate(nextIndex, true);
+        });
+    });
+})();
+</script>
 
 <!-- ==========================================================================
      8. ORGANIZER

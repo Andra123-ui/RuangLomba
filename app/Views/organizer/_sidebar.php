@@ -34,6 +34,13 @@ $cur    = 'aria-current="page"';
                 <i class="fa-solid fa-circle-plus" aria-hidden="true"></i> Tambah Peluang
             </a>
         </li>
+        <li>
+            <a href="<?= base_url('organizer/verifikasi') ?>"
+                class="<?= $path === 'organizer/verifikasi' ? 'active' : '' ?>"
+                <?= $path === 'organizer/verifikasi' ? $cur : '' ?>>
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Verifikasi Instansi
+            </a>
+        </li>
 
         <li class="org-menu-sep" aria-hidden="true"></li>
 

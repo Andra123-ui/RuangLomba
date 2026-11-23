@@ -119,7 +119,12 @@ if (! empty($competition['location']) && $competition['location'] !== $competiti
             <span class="opp-org-avatar"><?= esc($orgInitial) ?></span>
             <div>
                 <div class="opp-org-label">Diselenggarakan oleh</div>
-                <div class="opp-org-name"><?= esc($orgName) ?></div>
+                <div class="opp-org-name">
+                    <?= esc($orgName) ?>
+                    <?php if (($competition['organizer_verification'] ?? '') === 'verified'): ?>
+                    <i class="fa-solid fa-circle-check text-primary ms-1" title="Penyelenggara Terverifikasi Resmi"></i>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>

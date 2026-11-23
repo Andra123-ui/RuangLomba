@@ -133,6 +133,26 @@ if ($regLocked) {
                         </select>
                     </div>
 
+                    <div class="col-md-4">
+                        <label for="participation_type" class="form-label">Tipe Kepesertaan</label>
+                        <select class="form-select auth-input" id="participation_type" name="participation_type" required>
+                            <option value="Individu" <?= $val('participation_type', 'Individu') === 'Individu' ? 'selected' : '' ?>>Individu</option>
+                            <option value="Tim" <?= $val('participation_type') === 'Tim' ? 'selected' : '' ?>>Tim</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 team-limit-field" id="teamMinWrap">
+                        <label for="min_members" class="form-label">Min. Anggota Tim</label>
+                        <input type="number" min="2" max="50" class="form-control auth-input" id="min_members" name="min_members"
+                            value="<?= esc($val('min_members', 2)) ?>">
+                    </div>
+
+                    <div class="col-md-4 team-limit-field" id="teamMaxWrap">
+                        <label for="max_members" class="form-label">Maks. Anggota Tim</label>
+                        <input type="number" min="2" max="50" class="form-control auth-input" id="max_members" name="max_members"
+                            value="<?= esc($val('max_members', 5)) ?>">
+                    </div>
+
                     <div class="col-12" id="locationWrap">
                         <label for="location" class="form-label">Lokasi</label>
                         <input type="text" class="form-control auth-input<?= $inv('location') ?>" id="location"
@@ -225,6 +245,63 @@ if ($regLocked) {
                             src="<?= $isEdit && $competition['poster'] ? esc(media_url($competition['poster']), 'attr') : '' ?>"
                             alt="Pratinjau poster" <?= $isEdit && $competition['poster'] ? '' : 'hidden' ?>>
                     </div>
+                    </div>
+
+                    <!-- ===== LINK MEDIA SOSIAL / WEBSITE ===== -->
+                    <div class="col-12 mt-3">
+                        <label class="form-label">Link Media Sosial / Website <span class="text-secondary">(opsional)</span></label>
+                        <div id="linksContainer">
+                            <?php
+                            $existingLinks = old('link_platform', $links ?? []);
+                            $existingUrls  = old('link_url', $linkUrls ?? []);
+                            if (empty($existingLinks)):
+                            ?>
+                            <div class="link-row row g-2 mb-2 align-items-center">
+                                <div class="col-md-3">
+                                    <select class="form-select auth-input" name="link_platform[]">
+                                        <option value="">Pilih platform</option>
+                                        <option value="Instagram">Instagram</option>
+                                        <option value="Website">Website</option>
+                                        <option value="YouTube">YouTube</option>
+                                        <option value="Twitter">Twitter / X</option>
+                                        <option value="TikTok">TikTok</option>
+                                        <option value="WhatsApp">WhatsApp</option>
+                                        <option value="Lainnya">Lainnya</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <input type="url" class="form-control auth-input" name="link_url[]" placeholder="https://">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-remove-link" title="Hapus">&times;</button>
+                                </div>
+                            </div>
+                            <?php else: ?>
+                                <?php foreach ($existingLinks as $i => $platform): ?>
+                                <div class="link-row row g-2 mb-2 align-items-center">
+                                    <div class="col-md-3">
+                                        <select class="form-select auth-input" name="link_platform[]">
+                                            <option value="">Pilih platform</option>
+                                            <?php foreach (['Instagram','Website','YouTube','Twitter','TikTok','WhatsApp','Lainnya'] as $p): ?>
+                                            <option value="<?= esc($p, 'attr') ?>" <?= ($platform === $p) ? 'selected' : '' ?>><?= esc($p) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col">
+                                        <input type="url" class="form-control auth-input" name="link_url[]"
+                                            value="<?= esc($existingUrls[$i] ?? '') ?>" placeholder="https://">
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-outline-danger btn-sm btn-remove-link" title="Hapus">&times;</button>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="btnAddLink">
+                            + Tambah Link
+                        </button>
+                    </div>
                 </div>
 
                 <div class="d-flex flex-wrap gap-3 mt-4">
@@ -254,6 +331,21 @@ if ($regLocked) {
     mode.addEventListener('change', applyMode);
     applyMode();
 
+    // Tipe kepesertaan: min/max anggota hanya untuk Tim
+    var partType = document.getElementById('participation_type');
+    var minWrap  = document.getElementById('teamMinWrap');
+    var maxWrap  = document.getElementById('teamMaxWrap');
+
+    function applyParticipation() {
+        var isTeam = partType && partType.value === 'Tim';
+        if (minWrap) minWrap.hidden = !isTeam;
+        if (maxWrap) maxWrap.hidden = !isTeam;
+    }
+    if (partType) {
+        partType.addEventListener('change', applyParticipation);
+        applyParticipation();
+    }
+
     // Cara pendaftaran: link hanya untuk mode eksternal
     var regRadios = document.querySelectorAll('input[name="registration_mode"]');
     var linkWrap = document.getElementById('linkWrap');
@@ -279,12 +371,59 @@ if ($regLocked) {
     var input = document.getElementById('poster');
     var preview = document.getElementById('posterPreview');
 
-    input.addEventListener('change', function() {
-        var file = input.files[0];
-        if (!file) return;
-        preview.src = URL.createObjectURL(file);
-        preview.hidden = false;
-    });
+    if (input) {
+        input.addEventListener('change', function() {
+            var file = input.files[0];
+            if (!file) return;
+            preview.src = URL.createObjectURL(file);
+            preview.hidden = false;
+        });
+    }
+
+    // Dynamic Links
+    var btnAddLink = document.getElementById('btnAddLink');
+    var linksContainer = document.getElementById('linksContainer');
+
+    if (btnAddLink && linksContainer) {
+        btnAddLink.addEventListener('click', function() {
+            var row = document.createElement('div');
+            row.className = 'link-row row g-2 mb-2 align-items-center';
+            row.innerHTML = `
+                <div class="col-md-3">
+                    <select class="form-select auth-input" name="link_platform[]">
+                        <option value="">Pilih platform</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Website">Website</option>
+                        <option value="YouTube">YouTube</option>
+                        <option value="Twitter">Twitter / X</option>
+                        <option value="TikTok">TikTok</option>
+                        <option value="WhatsApp">WhatsApp</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <input type="url" class="form-control auth-input" name="link_url[]" placeholder="https://">
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-outline-danger btn-sm btn-remove-link" title="Hapus">&times;</button>
+                </div>
+            `;
+            linksContainer.appendChild(row);
+        });
+
+        linksContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-remove-link') || e.target.closest('.btn-remove-link')) {
+                var rows = linksContainer.querySelectorAll('.link-row');
+                var targetRow = e.target.closest('.link-row');
+                if (rows.length > 1) {
+                    targetRow.remove();
+                } else {
+                    targetRow.querySelector('select').value = '';
+                    targetRow.querySelector('input').value = '';
+                }
+            }
+        });
+    }
 })();
 </script>
 
