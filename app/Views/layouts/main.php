@@ -23,12 +23,75 @@
 
 <body>
 
+    <?php
+    $currentPath = trim(uri_string(), '/');
+    $isLoggedIn  = (bool) session()->get('isLoggedIn');
+    $userRole    = (string) session()->get('userRole');
+    $userName    = trim((string) session()->get('userName'));
+    $userId      = (int) session()->get('userId');
+
+    $isAdminPanel = $isLoggedIn && $userRole === 'admin'
+        && (str_starts_with($currentPath, 'admin/') || $currentPath === 'notifikasi');
+    $isOrganizerPanel = $isLoggedIn && $userRole === 'organizer'
+        && (str_starts_with($currentPath, 'organizer/') || $currentPath === 'notifikasi');
+    $isParticipantPage = $isLoggedIn && $userRole === 'participant' && (
+        in_array($currentPath, ['pendaftaran-saya', 'tersimpan', 'profil', 'tim', 'notifikasi'], true)
+        || preg_match('#^peluang/\d+/daftar$#', $currentPath) === 1
+    );
+    $showRoleSidebar = $isAdminPanel || $isOrganizerPanel || $isParticipantPage;
+    $hidePublicNavbar = $isAdminPanel || $isOrganizerPanel;
+
+    $userAvatar = '';
+    if ($isLoggedIn && $userId > 0) {
+        $profile = db_connect()->table('users')
+            ->select('avatar')
+            ->where('id', $userId)
+            ->get()
+            ->getRowArray();
+        $userAvatar = media_url($profile['avatar'] ?? '');
+    }
+
+    $displayUserName = $userName;
+    if (mb_strlen($userName) > 16) {
+        $nameParts = preg_split('/\s+/u', $userName, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($nameParts) > 1) {
+            $displayUserName = array_shift($nameParts);
+            foreach ($nameParts as $part) {
+                $displayUserName .= ' ' . mb_strtoupper(mb_substr($part, 0, 1));
+            }
+        } else {
+            $displayUserName = mb_substr($userName, 0, 13) . '…';
+        }
+    }
+    ?>
+
     <div class="scroll-progress"></div>
 
-    <?= $this->include('layouts/navbar') ?>
+    <?php if (! $hidePublicNavbar): ?>
+    <?= view('layouts/navbar', [
+        'userAvatar'      => $userAvatar,
+        'displayUserName' => $displayUserName,
+    ]) ?>
+    <?php endif; ?>
 
+    <?php if ($showRoleSidebar): ?>
+    <div class="role-app-shell role-app-<?= esc($userRole, 'attr') ?>">
+        <?= view('layouts/role_sidebar', [
+            'currentPath'     => $currentPath,
+            'displayUserName' => $displayUserName,
+            'userAvatar'      => $userAvatar,
+            'userName'        => $userName,
+            'userRole'        => $userRole,
+        ]) ?>
+        <main class="role-app-content">
+            <?= $this->renderSection('content') ?>
+        </main>
+    </div>
+    <?php else: ?>
     <?= $this->renderSection('content') ?>
+    <?php endif; ?>
 
+    <?= $this->include('layouts/confirm_dialog') ?>
     <?= $this->include('layouts/toast') ?>
 
     <!-- Bootstrap Bundle (termasuk Popper, dipakai untuk navbar collapse) -->

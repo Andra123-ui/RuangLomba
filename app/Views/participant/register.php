@@ -54,6 +54,13 @@ $isFree = (int) $competition['registration_fee'] === 0;
                             readonly>
                     </div>
 
+                    <div class="col-12">
+                        <div class="p-2 px-3 rounded-3 bg-light border d-flex align-items-center gap-2 small text-secondary">
+                            <i class="fa-solid fa-certificate text-primary flex-shrink-0"></i>
+                            <span>Nama <strong><?= esc($user['name'] ?? '') ?></strong> akan dicetak pada <strong>E-Sertifikat</strong> dan <strong>ID Card</strong> kegiatan ini. Jika nama belum sesuai KTP/Kartu Pelajar, silakan ubah di <a href="<?= base_url('profil') ?>" class="text-primary fw-semibold" target="_blank">Profil Saya</a> sebelum mendaftar.</span>
+                        </div>
+                    </div>
+
                     <?php if (($competition['participation_type'] ?? 'Individu') === 'Tim'): ?>
                     <div class="col-12">
                         <label for="team_id" class="form-label fw-semibold">Pilih Tim Kamu <span class="badge bg-primary ms-1">Kompetisi Beregu</span></label>

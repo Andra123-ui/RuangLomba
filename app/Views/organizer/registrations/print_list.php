@@ -50,6 +50,8 @@
 </head>
 <body>
 
+<?php $isExternal = ($competition['registration_mode'] ?? 'internal') === 'external'; ?>
+
 <div class="container">
     <div class="no-print my-4 d-flex justify-content-between align-items-center" style="max-width: 960px; margin: 0 auto;">
         <button onclick="window.close()" class="btn btn-outline-secondary btn-sm">
@@ -64,8 +66,11 @@
         <!-- Header Dokumen Laporan -->
         <div class="report-header d-flex justify-content-between align-items-center">
             <div>
-                <h3 class="fw-bold mb-0">LAPORAN REKAPITULASI PENDAFTAR</h3>
-                <div class="text-secondary small">Dokumen Resmi RuangLomba &middot; Dicetak pada <?= date('d F Y, H:i') ?> WIB</div>
+                <h3 class="fw-bold mb-0"><?= $isExternal ? 'REKAP LAPORAN PENDAFTARAN EKSTERNAL' : 'LAPORAN REKAPITULASI PENDAFTAR' ?></h3>
+                <div class="text-secondary small">
+                    <?= $isExternal ? 'Laporan mandiri peserta &middot; ' : 'Dokumen Resmi RuangLomba &middot; ' ?>
+                    Dicetak pada <?= date('d F Y, H:i') ?> WIB
+                </div>
             </div>
             <div class="text-end">
                 <span class="fs-4 fw-bold text-primary">RuangLomba</span>
@@ -84,11 +89,14 @@
                     <strong><?= esc($competition['type']) ?> &middot; <?= esc($competition['education_level']) ?></strong>
                 </div>
                 <div class="col-md-3">
-                    <span class="text-secondary small d-block">Total Pendaftar:</span>
-                    <strong class="text-primary fs-6"><?= count($registrations) ?> Peserta</strong>
+                    <span class="text-secondary small d-block"><?= $isExternal ? 'Total Laporan:' : 'Total Pendaftar:' ?></span>
+                    <strong class="text-primary fs-6"><?= count($registrations) ?> <?= $isExternal ? 'Laporan' : 'Peserta' ?></strong>
                 </div>
             </div>
         </div>
+        <?php if ($isExternal): ?>
+        <p class="small text-secondary">Daftar berikut berisi laporan mandiri peserta untuk pendaftaran eksternal, bukan data yang disinkronkan otomatis dari platform penyelenggara.</p>
+        <?php endif; ?>
 
         <!-- Tabel Rekap Data -->
         <div class="table-responsive mb-4">
@@ -129,9 +137,9 @@
                         </td>
                         <td class="text-center">
                             <?php if ($r['status'] === 'verified'): ?>
-                                <span class="badge bg-success">Terverifikasi</span>
+                                <span class="badge bg-success"><?= $isExternal ? 'Terverifikasi penyelenggara' : 'Terverifikasi' ?></span>
                             <?php elseif ($r['status'] === 'pending'): ?>
-                                <span class="badge bg-warning text-dark">Menunggu</span>
+                                <span class="badge bg-warning text-dark"><?= $isExternal ? 'Menunggu verifikasi penyelenggara' : 'Menunggu' ?></span>
                             <?php else: ?>
                                 <span class="badge bg-danger">Ditolak</span>
                             <?php endif; ?>

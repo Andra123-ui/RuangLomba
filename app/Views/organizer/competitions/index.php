@@ -10,10 +10,7 @@ $statusMap = [
 ];
 ?>
 
-<div class="container org-shell">
-    <?= $this->include('organizer/_sidebar') ?>
-
-    <div class="org-main">
+<div class="org-main">
         <header class="org-head">
             <div>
                 <h1>Peluang Saya</h1>
@@ -90,24 +87,17 @@ $statusMap = [
                             </td>
 
                             <td>
-                                <?php if ($isInternal): ?>
                                 <div class="org-reg">
                                     <a href="<?= base_url('organizer/lomba/' . $c['id'] . '/pendaftar') ?>"
                                         class="org-reg-link">
                                         <i class="fa-solid fa-users" aria-hidden="true"></i>
-                                        Pendaftar
+                                        <?= $isInternal ? 'Pendaftar' : 'Laporan eksternal' ?>
                                         <b><?= $rc['total'] ?></b>
                                     </a>
                                     <?php if ($rc['pending'] > 0): ?>
-                                    <span class="org-reg-new"><?= $rc['pending'] ?> menunggu verifikasi</span>
+                                    <span class="org-reg-new"><?= $rc['pending'] ?> <?= $isInternal ? 'menunggu verifikasi' : 'menunggu pemeriksaan' ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <?php else: ?>
-                                <span class="org-reg-muted">
-                                    <i class="fa-solid fa-arrow-up-right-from-square me-1" aria-hidden="true"></i>
-                                    Link eksternal
-                                </span>
-                                <?php endif; ?>
                             </td>
 
                             <td class="text-end">
@@ -142,7 +132,6 @@ $statusMap = [
         </div>
         <?php endif; ?>
     </div>
-</div>
 
 <!-- Modal konfirmasi hapus -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">

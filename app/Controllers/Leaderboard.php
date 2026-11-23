@@ -9,17 +9,17 @@ class Leaderboard extends BaseController
         $db = \Config\Database::connect();
         $currentUserId = (int) session()->get('userId');
 
-        // Ambil peserta, poin gamifikasi, dan jumlah lomba yang berhasil diverifikasi
+        // Ambil total poin dan jumlah hasil podium yang tercatat untuk tiap peserta.
         $rows = $db->table('users u')
-            ->select('u.id, u.name, u.avatar, u.points, u.created_at, 
-                     COUNT(DISTINCT r.id) AS verified_competitions,
+            ->select('u.id, u.name, u.avatar, u.points, u.created_at,
+                     COUNT(DISTINCT pa.registration_id) AS podium_finishes,
                      up.preferred_level', false)
-            ->join('registrations r', "r.user_id = u.id AND r.status = 'verified'", 'left')
+            ->join('registration_point_awards pa', "pa.user_id = u.id AND pa.award_type = 'placement'", 'left')
             ->join('user_preferences up', 'up.user_id = u.id', 'left')
             ->where('u.role', 'participant')
             ->groupBy('u.id')
             ->orderBy('u.points', 'DESC')
-            ->orderBy('verified_competitions', 'DESC')
+            ->orderBy('podium_finishes', 'DESC')
             ->orderBy('u.id', 'ASC')
             ->get()
             ->getResultArray();
@@ -36,7 +36,7 @@ class Leaderboard extends BaseController
                 $myRank = $row;
             }
 
-            if ($rank <= 3) {
+            if ($rank <= 3 && (int) $row['points'] > 0) {
                 $topThree[] = $row;
             }
             $rankings[] = $row;

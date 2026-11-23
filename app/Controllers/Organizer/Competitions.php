@@ -184,13 +184,9 @@ class Competitions extends BaseController
         return $row;
     }
 
-    /** Mode dikunci kalau peluang internal dan sudah ada pendaftar */
+    /** Mode dikunci setelah peserta mendaftar atau melaporkan pendaftaran. */
     private function isModeLocked(array $competition): bool
     {
-        if (($competition['registration_mode'] ?? 'external') !== 'internal') {
-            return false;
-        }
-
         return db_connect()->table('registrations')
             ->where('competition_id', $competition['id'])
             ->countAllResults() > 0;
@@ -255,10 +251,10 @@ class Competitions extends BaseController
         $mode          = $this->request->getPost('implementation_type');
         $needsLocation = in_array($mode, ['Offline', 'Hybrid'], true);
 
-        // Mode pendaftaran: dikunci ke 'internal' kalau sudah ada pendaftar
+        // Pertahankan mode yang sedang dipakai setelah ada pendaftar/laporan.
         $regMode = $this->request->getPost('registration_mode');
         if ($competition && $this->isModeLocked($competition)) {
-            $regMode = 'internal';
+            $regMode = $competition['registration_mode'] ?? 'external';
         }
         $isExternal = ($regMode === 'external');
 

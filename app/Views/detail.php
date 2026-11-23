@@ -25,6 +25,10 @@ $regStatusMap = [
     'verified' => 'Pendaftaran terverifikasi',
     'rejected' => 'Pendaftaran ditolak',
 ];
+if ($regMode === 'external') {
+    $regStatusMap['pending'] = 'Menunggu verifikasi penyelenggara';
+    $regStatusMap['verified'] = 'Terverifikasi penyelenggara';
+}
 
 $orgName    = $competition['organizer_name'] ?? '-';
 $orgInitial = strtoupper(mb_substr($orgName, 0, 1));
@@ -1066,11 +1070,42 @@ $orgWeb     = $links['website'] ?? '';
                         </a>
                         <?php endif; ?>
 
-                        <?php elseif (!$isClosed && $regLink !== ''): ?>
+                        <?php elseif ($myReg): ?>
+                        <?php if ($regLink !== ''): ?>
                         <a href="<?= esc($regLink, 'attr') ?>" target="_blank" rel="noopener noreferrer"
                             class="btn-detail">
-                            Daftar Sekarang <i class="fa-solid fa-chevron-right"></i>
+                            Buka Situs Penyelenggara <i class="fa-solid fa-arrow-up-right-from-square"></i>
                         </a>
+                        <?php endif; ?>
+                        <span class="btn-detail <?= $myReg['status'] === 'rejected' ? 'is-rejected' : 'is-registered' ?>">
+                            <i class="fa-solid <?= $myReg['status'] === 'rejected' ? 'fa-circle-xmark' : 'fa-circle-check' ?>"></i>
+                            <?= esc($regStatusMap[$myReg['status']] ?? $myReg['status']) ?>
+                        </span>
+                        <?php elseif ($isClosed): ?>
+                        <span class="btn-detail is-disabled">Pendaftaran Ditutup</span>
+                        <?php elseif ($regLink !== ''): ?>
+                        <a href="<?= esc($regLink, 'attr') ?>" target="_blank" rel="noopener noreferrer"
+                            class="btn-detail">
+                            Daftar di Situs Penyelenggara <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                        <?php if ($isLoggedIn && $userRole === 'participant'): ?>
+                        <form action="<?= base_url('peluang/' . $competition['id'] . '/lapor-daftar-eksternal') ?>"
+                            method="post" class="mt-2"
+                            data-confirm-title="Konfirmasi pendaftaran" data-confirm-label="Ya, sudah mendaftar"
+                            data-confirm-message="Pastikan kamu sudah mengirim formulir di situs penyelenggara. Laporan ini akan menunggu verifikasi penyelenggara.">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                Saya sudah mendaftar
+                            </button>
+                        </form>
+                        <small class="text-secondary d-block mt-2">Laporanmu akan menunggu verifikasi penyelenggara; RuangLomba tidak dapat memeriksa formulir eksternal secara otomatis.</small>
+                        <?php elseif (!$isLoggedIn): ?>
+                        <a href="<?= base_url('masuk') ?>" class="btn btn-outline-primary w-100 mt-2">
+                            Masuk untuk melaporkan pendaftaran
+                        </a>
+                        <?php elseif ($userRole !== 'participant'): ?>
+                        <span class="btn-detail is-disabled">Konfirmasi hanya untuk peserta</span>
+                        <?php endif; ?>
                         <?php else: ?>
                         <span class="btn-detail is-disabled">
                             <?= $isClosed ? 'Pendaftaran Ditutup' : 'Link Belum Tersedia' ?>

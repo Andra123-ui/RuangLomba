@@ -11,6 +11,7 @@ $routes->get('leaderboard', 'Leaderboard::index');
 $routes->get('peluang/(:num)', 'Cari::detail/$1');
 $routes->get('peluang/(:num)/daftar', 'Participant\Registrations::form/$1', ['filter' => 'auth:participant']);
 $routes->post('peluang/(:num)/daftar', 'Participant\Registrations::store/$1', ['filter' => 'auth:participant']);
+$routes->post('peluang/(:num)/lapor-daftar-eksternal', 'Participant\Registrations::reportExternal/$1', ['filter' => 'auth:participant']);
 $routes->get('pendaftaran-saya', 'Participant\Registrations::index', ['filter' => 'auth:participant']);
 $routes->get('pendaftaran/(:num)/cetak', 'Participant\Registrations::printCard/$1', ['filter' => 'auth:participant']);
 $routes->get('tersimpan', 'Participant\Bookmarks::index', ['filter' => 'auth:participant']);
@@ -68,6 +69,7 @@ $routes->group('organizer', ['filter' => 'auth:organizer'], static function ($ro
     $routes->get('lomba/(:num)/cetak-pendaftar', 'Organizer\Registrations::printList/$1');
     $routes->post('pendaftar/(:num)/verifikasi', 'Organizer\Registrations::verify/$1');
     $routes->post('pendaftar/(:num)/tolak', 'Organizer\Registrations::reject/$1');
+    $routes->post('pendaftar/(:num)/hasil', 'Organizer\Registrations::setPlacement/$1');
 
     $routes->get('verifikasi', 'Organizer\Verification::index');
     $routes->post('verifikasi', 'Organizer\Verification::submit');
@@ -86,4 +88,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes) {
     $routes->get('organizer/(:num)', 'Admin\Organizers::show/$1');
     $routes->post('organizer/(:num)/verifikasi', 'Admin\Organizers::verify/$1');
     $routes->post('organizer/(:num)/tolak', 'Admin\Organizers::reject/$1');
+
+    $routes->get('pengguna', 'Admin\Users::index');
+    $routes->post('pengguna/(:num)/reset-nama', 'Admin\Users::resetName/$1');
 });

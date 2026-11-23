@@ -25,52 +25,19 @@ $ago = function (string $dt): string {
 <style>
 /* ================================
    LATAR HALAMAN
-   Selalu setinggi layar, dengan cahaya blur di tiga sudut
 ================================= */
 .notif-page {
     position: relative;
     overflow: hidden;
     min-height: calc(100vh - 77px);
     padding: 56px 0 96px;
-    background: linear-gradient(165deg, #FFFFFF 0%, #F0F4FE 40%, #E5EDFC 72%, #F7F9FF 100%);
+    background: #fff;
 }
 
 .notif-page::before,
 .notif-page::after,
 .notif-glow {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    pointer-events: none;
-    z-index: 0;
-}
-
-.notif-page::before {
-    width: 420px;
-    height: 420px;
-    top: -150px;
-    right: -100px;
-    background: radial-gradient(circle, var(--ocean-light) 0%, transparent 70%);
-    opacity: .75;
-}
-
-.notif-page::after {
-    width: 380px;
-    height: 380px;
-    bottom: -160px;
-    left: -100px;
-    background: radial-gradient(circle, var(--ocean-aqua) 0%, transparent 70%);
-    opacity: .28;
-}
-
-.notif-glow {
-    width: 300px;
-    height: 300px;
-    top: 42%;
-    right: -120px;
-    background: radial-gradient(circle, var(--ocean-teal) 0%, transparent 70%);
-    opacity: .12;
+    display: none;
 }
 
 .notif-wrap {
@@ -105,10 +72,10 @@ $ago = function (string $dt): string {
     align-items: center;
     justify-content: center;
     border-radius: 18px;
-    color: #fff;
+    color: var(--c-blue);
     font-size: 22px;
-    background: linear-gradient(135deg, var(--ocean-navy), var(--ocean-mid) 60%, var(--ocean-teal));
-    box-shadow: 0 16px 28px -14px rgba(0, 36, 107, .65);
+    background: #fff;
+    border: 1px solid var(--c-border);
 }
 
 .notif-head h1 {
@@ -168,22 +135,22 @@ $ago = function (string $dt): string {
     padding: 18px 22px;
     border: 1px solid var(--c-border);
     border-radius: 18px;
-    background: rgba(255, 255, 255, .92);
+    background: #fff;
     text-align: left;
     cursor: pointer;
-    box-shadow: 0 14px 30px -24px rgba(0, 36, 107, .35);
+    box-shadow: 0 8px 22px -20px rgba(15, 23, 42, .35);
     transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease);
 }
 
 .notif-item:hover {
     transform: translateY(-3px);
     border-color: var(--c-blue);
-    box-shadow: 0 22px 40px -22px rgba(0, 36, 107, .4);
+    box-shadow: 0 12px 26px -22px rgba(15, 23, 42, .35);
 }
 
-/* Belum dibaca: tint biru + garis aksen di kiri */
+/* Belum dibaca: garis aksen di kiri */
 .notif-item.is-unread {
-    background: linear-gradient(135deg, #FFFFFF 0%, #EEF3FF 100%);
+    background: #fff;
     border-color: var(--c-lightblue);
 }
 
@@ -205,9 +172,10 @@ $ago = function (string $dt): string {
     align-items: center;
     justify-content: center;
     border-radius: 14px;
-    background: var(--c-blue-dim);
+    background: #fff;
     color: var(--c-blue);
     font-size: 17px;
+    border: 1px solid var(--c-border);
     transition: transform .3s var(--ease);
 }
 
@@ -216,9 +184,9 @@ $ago = function (string $dt): string {
 }
 
 .notif-item.is-unread .notif-ico {
-    background: linear-gradient(135deg, var(--ocean-navy), var(--ocean-mid) 60%, var(--ocean-aqua));
-    color: #fff;
-    box-shadow: 0 10px 18px -10px rgba(0, 36, 107, .6);
+    background: #fff;
+    color: var(--c-blue);
+    box-shadow: none;
 }
 
 .notif-body {
@@ -268,7 +236,7 @@ $ago = function (string $dt): string {
     text-align: center;
     border: 1.5px dashed var(--c-lightblue);
     border-radius: 22px;
-    background: rgba(255, 255, 255, .8);
+    background: #fff;
 }
 
 .notif-empty-ico {
@@ -281,7 +249,8 @@ $ago = function (string $dt): string {
     border-radius: 50%;
     font-size: 28px;
     color: var(--c-blue);
-    background: var(--c-blue-dim);
+    background: #fff;
+    border: 1px solid var(--c-border);
 }
 
 .notif-empty h2 {

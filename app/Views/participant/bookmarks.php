@@ -126,7 +126,9 @@
                 }, 350);
             })
             .catch(function(err) {
-                if (err.message !== 'redirect') alert('Gagal menghapus dari tersimpan. Coba lagi.');
+                if (err.message !== 'redirect') {
+                    window.showRlToast('Gagal menghapus dari tersimpan. Coba lagi.', 'error');
+                }
             })
             .finally(function() {
                 busy = false;

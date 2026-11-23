@@ -93,7 +93,8 @@
             <div class="d-flex flex-wrap gap-2">
                 <?php if ($organizer['verification_status'] !== 'verified' && ! empty($organizer['verification_document'])): ?>
                 <form action="<?= base_url('admin/organizer/' . $organizer['id'] . '/verifikasi') ?>" method="post"
-                      onsubmit="return confirm('Apakah Anda yakin dokumen legalitas instansi ini SAH? Lencana Centang Biru akan langsung aktif.');">
+                      data-confirm-title="Verifikasi instansi" data-confirm-label="Setujui"
+                      data-confirm-message="Apakah Anda yakin dokumen legalitas instansi ini SAH? Lencana Centang Biru akan langsung aktif.">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn-success px-4">
                         <i class="fa-solid fa-check me-1"></i> Setujui &amp; Beri Centang Biru

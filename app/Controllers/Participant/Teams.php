@@ -52,11 +52,20 @@ class Teams extends BaseController
         $userId = (int) session()->get('userId');
 
         $rules = [
-            'name' => 'required|min_length[3]|max_length[100]',
+            'name' => 'required|min_length[3]|max_length[100]|clean_words',
         ];
 
-        if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Nama tim minimal 3 karakter.');
+        $messages = [
+            'name' => [
+                'required'    => 'Nama tim wajib diisi.',
+                'min_length'  => 'Nama tim minimal 3 karakter.',
+                'clean_words' => 'Nama tim tidak boleh mengandung kata yang kasar, tidak pantas, atau melanggar norma SARA.',
+            ],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            $errors = $this->validator->getErrors();
+            return redirect()->back()->withInput()->with('error', reset($errors));
         }
 
         $teamName = trim((string) $this->request->getPost('name'));

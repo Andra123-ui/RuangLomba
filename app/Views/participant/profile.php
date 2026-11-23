@@ -83,13 +83,25 @@ $prefVal = fn (string $k, $d = '') => old($k, $preference[$k] ?? $d);
                             <div class="col-md-7">
                                 <label for="name" class="form-label fw-semibold">Nama Lengkap</label>
                                 <input type="text" class="form-control auth-input<?= $inv('name') ?>" id="name" name="name"
-                                    value="<?= esc($val('name')) ?>" required>
+                                    value="<?= esc($val('name')) ?>" placeholder="Contoh: Muhammad Budi Santoso" required>
+                                <div class="form-text text-muted small mt-1">
+                                    Diawali huruf kapital per kata. Contoh: <em>Muhammad Budi Santoso</em>
+                                </div>
                             </div>
                             <div class="col-md-5">
                                 <label for="avatar" class="form-label fw-semibold">Ganti Foto Profil</label>
                                 <input type="file" class="form-control auth-input<?= $inv('avatar') ?>" id="avatar" name="avatar"
                                     accept="image/jpeg,image/png,image/webp">
                                 <div class="form-text small">Maks 2MB (JPG, PNG, WebP)</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="p-3 rounded-3 bg-light border d-flex align-items-start gap-2">
+                                    <i class="fa-solid fa-certificate text-primary fs-5 mt-1 flex-shrink-0"></i>
+                                    <div class="small text-secondary">
+                                        <strong class="text-dark d-block mb-1">Penting: Penerbitan E-Sertifikat &amp; ID Card</strong>
+                                        Nama lengkap di atas digunakan otomatis untuk pencetakan <strong>E-Sertifikat</strong>, <strong>ID Card Peserta</strong>, dan verifikasi panitia lomba. Pastikan menggunakan nama asli sesuai kartu identitas (KTP/Kartu Pelajar). Penggunaan nama samaran, nama makanan, atau objek dapat membatalkan kejuaraan.
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

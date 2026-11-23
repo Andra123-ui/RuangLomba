@@ -6,10 +6,7 @@ $status = $profile['verification_status'] ?? 'unverified';
 $errors = session()->getFlashdata('errors') ?? [];
 ?>
 
-<div class="container org-shell">
-    <?= $this->include('organizer/_sidebar') ?>
-
-    <div class="org-main">
+<div class="org-main">
         <header class="org-head">
             <div>
                 <h1>Verifikasi Instansi Penyelenggara</h1>
@@ -163,6 +160,5 @@ $errors = session()->getFlashdata('errors') ?? [];
         </div>
         <?php endif; ?>
     </div>
-</div>
 
 <?= $this->endSection() ?>

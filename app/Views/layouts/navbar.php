@@ -3,6 +3,14 @@ $current    = trim(uri_string(), '/');
 $isLoggedIn = (bool) session()->get('isLoggedIn');
 $userName   = (string) session()->get('userName');
 $userRole   = (string) session()->get('userRole');
+$userEmail  = (string) session()->get('userEmail');
+$userAvatar = $userAvatar ?? '';
+$displayUserName = $displayUserName ?? $userName;
+$roleLabels = [
+    'admin'       => 'Administrator',
+    'organizer'   => 'Penyelenggara',
+    'participant' => 'Peserta',
+];
 ?>
 <nav class="navbar navbar-expand-lg navbar-ruang sticky-top">
     <div class="container">
@@ -54,19 +62,42 @@ $userRole   = (string) session()->get('userRole');
                 </a>
                 <div class="dropdown">
                     <button
-                        class="btn btn-outline-primary btn-sm dropdown-toggle w-100 d-flex align-items-center justify-content-between user-menu-btn"
+                        class="btn dropdown-toggle d-flex align-items-center gap-2 user-menu-btn"
                         type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false"
-                        aria-label="Menu pengguna: <?= esc($userName) ?>">
-                        <span class="text-truncate" style="max-width: 140px;">
-                            <?= esc($userName) ?>
+                        aria-label="Menu pengguna: <?= esc($userName, 'attr') ?>">
+                        <?php if ($userAvatar !== ''): ?>
+                        <img src="<?= esc($userAvatar, 'attr') ?>" alt="" class="nav-user-avatar">
+                        <?php else: ?>
+                        <span class="nav-user-avatar nav-user-avatar-fallback" aria-hidden="true">
+                            <?= esc(mb_strtoupper(mb_substr($userName, 0, 1))) ?>
                         </span>
+                        <?php endif; ?>
+                        <span class="nav-user-name"><?= esc($displayUserName) ?></span>
                     </button>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenuButton">
+                    <ul class="dropdown-menu dropdown-menu-end nav-user-dropdown" aria-labelledby="userMenuButton">
+                        <li>
+                            <div class="nav-user-summary">
+                                <?php if ($userAvatar !== ''): ?>
+                                <img src="<?= esc($userAvatar, 'attr') ?>" alt="" class="nav-user-summary-avatar">
+                                <?php else: ?>
+                                <span class="nav-user-summary-avatar nav-user-avatar-fallback" aria-hidden="true">
+                                    <?= esc(mb_strtoupper(mb_substr($userName, 0, 1))) ?>
+                                </span>
+                                <?php endif; ?>
+                                <span class="nav-user-summary-copy">
+                                    <span class="nav-user-summary-name"><?= esc($userName) ?></span>
+                                    <span class="nav-user-summary-meta">
+                                        <?= esc($userEmail !== '' ? $userEmail : ($roleLabels[$userRole] ?? 'Akun')) ?>
+                                    </span>
+                                </span>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <?php if ($userRole === 'admin'): ?>
                         <li>
                             <a class="dropdown-item" href="<?= base_url('admin/dashboard') ?>">
-                                <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+                                <i class="fa-solid fa-gauge-high fa-fw me-2"></i>Dashboard Admin
                             </a>
                         </li>
                         <li>
@@ -80,6 +111,11 @@ $userRole   = (string) session()->get('userRole');
                             </a>
                         </li>
                         <li>
+                            <a class="dropdown-item" href="<?= base_url('admin/pengguna') ?>">
+                                <i class="fa-solid fa-users-gear fa-fw me-2"></i>Manajemen Pengguna
+                            </a>
+                        </li>
+                        <li>
                             <hr class="dropdown-divider">
                         </li>
                         <?php endif; ?>
@@ -87,12 +123,22 @@ $userRole   = (string) session()->get('userRole');
                         <?php if ($userRole === 'organizer'): ?>
                         <li>
                             <a class="dropdown-item" href="<?= base_url('organizer/dashboard') ?>">
-                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                <i class="fa-solid fa-gauge-high fa-fw me-2"></i>Dashboard
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="<?= base_url('organizer/lomba') ?>">
-                                <i class="bi bi-trophy me-2"></i>Peluang Saya
+                                <i class="fa-solid fa-trophy fa-fw me-2"></i>Peluang Saya
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?= base_url('organizer/lomba/baru') ?>">
+                                <i class="fa-solid fa-circle-plus fa-fw me-2"></i>Tambah Peluang
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="<?= base_url('organizer/verifikasi') ?>">
+                                <i class="fa-solid fa-shield-halved fa-fw me-2"></i>Verifikasi Instansi
                             </a>
                         </li>
                         <li>
@@ -128,10 +174,11 @@ $userRole   = (string) session()->get('userRole');
 
                         <li>
                             <form action="<?= base_url('keluar') ?>" method="post" class="m-0"
-                                onsubmit="return confirm('Yakin ingin keluar?');">
+                                data-confirm-title="Keluar dari akun?" data-confirm-label="Keluar"
+                                data-confirm-message="Yakin ingin keluar?">
                                 <?= csrf_field() ?>
                                 <button type="submit" class="dropdown-item text-danger">
-                                    <i class="bi bi-box-arrow-right me-2"></i>Keluar
+                                    <i class="fa-solid fa-arrow-right-from-bracket fa-fw me-2"></i>Keluar
                                 </button>
                             </form>
                         </li>

@@ -65,7 +65,7 @@ $howFeatured = $featured_opportunities[0] ?? null;
 
             <div class="d-flex flex-wrap gap-3 mt-4">
                 <a href="<?= base_url('cari') ?>" class="btn btn-primary">Jelajahi Peluang</a>
-                <a href="<?= base_url('cari?type=Lomba') ?>" class="btn btn-outline-primary">Top Lomba</a>
+                <a href="<?= base_url('leaderboard') ?>" class="btn btn-outline-primary">Top Score</a>
             </div>
         </div>
 
@@ -245,9 +245,11 @@ $howFeatured = $featured_opportunities[0] ?? null;
         <div class="match-section match-showcase reveal">
             <div class="row g-4 g-xl-5 align-items-center">
                 <div class="col-lg-6 match-copy">
-                    <span class="match-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> Rekomendasi personal</span>
+                    <span class="match-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> Rekomendasi
+                        personal</span>
                     <h2>Lebih dekat dengan peluang yang tepat.</h2>
-                    <p>LombaMatch AI menyusun rekomendasi dari minat, keahlian, jenjang, dan preferensi yang kamu atur—agar pencarian terasa lebih terarah.</p>
+                    <p>LombaMatch AI menyusun rekomendasi dari minat, keahlian, jenjang, dan preferensi yang kamu
+                        atur—agar pencarian terasa lebih terarah.</p>
 
                     <div class="match-benefits">
                         <div><i class="fa-solid fa-circle-check"></i> Disesuaikan dengan preferensimu</div>
@@ -296,41 +298,44 @@ $howFeatured = $featured_opportunities[0] ?? null;
                         <div class="match-recommendation-head">
                             <div>
                                 <h4>Rekomendasi untukmu</h4>
-                                <p><?= ! empty($lomba_match['has_preferences']) ? 'Diurutkan berdasarkan kecocokan profil' : 'Atur preferensi untuk hasil yang lebih personal' ?></p>
+                                <p><?= ! empty($lomba_match['has_preferences']) ? 'Diurutkan berdasarkan kecocokan profil' : 'Atur preferensi untuk hasil yang lebih personal' ?>
+                                </p>
                             </div>
                             <span class="match-count"><?= count($lomba_match['matches']) ?> pilihan</span>
                         </div>
 
                         <?php if (! empty($lomba_match['matches'])): ?>
-                            <div class="match-results">
-                                <?php foreach ($lomba_match['matches'] as $m): ?>
-                                <a href="<?= base_url('peluang/' . $m['id']) ?>" class="match-result">
-                                    <span class="match-result-thumb">
-                                        <?php if (! empty($m['poster'])): ?>
-                                        <img src="<?= esc($m['poster'], 'attr') ?>" alt="" loading="lazy">
-                                        <?php else: ?>
-                                        <i class="fa-solid fa-trophy" aria-hidden="true"></i>
-                                        <?php endif; ?>
-                                    </span>
-                                    <span class="match-result-content">
-                                        <strong class="match-result-title"><?= esc($m['title']) ?></strong>
-                                        <span class="match-result-meta"><?= esc($m['category_name']) ?> · <?= esc($m['implementation_type']) ?> · <?= esc($m['fee_label']) ?></span>
-                                        <?php if (! empty($m['matched_skills'])): ?>
-                                        <span class="match-skill-match"><i class="fa-solid fa-check"></i> Keahlian cocok: <?= esc(implode(', ', $m['matched_skills'])) ?></span>
-                                        <?php endif; ?>
-                                    </span>
-                                    <span class="match-result-score">
-                                        <?= ! empty($lomba_match['has_preferences']) ? (int) $m['pct'] . '%' : 'Aktif' ?>
-                                        <small><?= ! empty($lomba_match['has_preferences']) ? 'cocok' : 'peluang' ?></small>
-                                    </span>
-                                </a>
-                                <?php endforeach; ?>
-                            </div>
+                        <div class="match-results">
+                            <?php foreach ($lomba_match['matches'] as $m): ?>
+                            <a href="<?= base_url('peluang/' . $m['id']) ?>" class="match-result">
+                                <span class="match-result-thumb">
+                                    <?php if (! empty($m['poster'])): ?>
+                                    <img src="<?= esc($m['poster'], 'attr') ?>" alt="" loading="lazy">
+                                    <?php else: ?>
+                                    <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="match-result-content">
+                                    <strong class="match-result-title"><?= esc($m['title']) ?></strong>
+                                    <span class="match-result-meta"><?= esc($m['category_name']) ?> ·
+                                        <?= esc($m['implementation_type']) ?> · <?= esc($m['fee_label']) ?></span>
+                                    <?php if (! empty($m['matched_skills'])): ?>
+                                    <span class="match-skill-match"><i class="fa-solid fa-check"></i> Keahlian cocok:
+                                        <?= esc(implode(', ', $m['matched_skills'])) ?></span>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="match-result-score">
+                                    <?= ! empty($lomba_match['has_preferences']) ? (int) $m['pct'] . '%' : 'Aktif' ?>
+                                    <small><?= ! empty($lomba_match['has_preferences']) ? 'cocok' : 'peluang' ?></small>
+                                </span>
+                            </a>
+                            <?php endforeach; ?>
+                        </div>
                         <?php else: ?>
-                            <div class="match-empty">
-                                <i class="fa-solid fa-compass"></i>
-                                Belum ada lomba yang sedang aktif sesuai filter saat ini.
-                            </div>
+                        <div class="match-empty">
+                            <i class="fa-solid fa-compass"></i>
+                            Belum ada lomba yang sedang aktif sesuai filter saat ini.
+                        </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -398,8 +403,8 @@ $howFeatured = $featured_opportunities[0] ?? null;
         <div class="row how-layout g-4 align-items-stretch">
             <div class="col-lg-5 reveal">
                 <div class="how-steps" role="tablist" aria-label="Cara menggunakan RuangLomba" data-how-tabs>
-                    <button class="how-step is-active" id="how-step-0" type="button" role="tab"
-                        aria-selected="true" aria-controls="how-panel-0" tabindex="0" data-how-tab="0">
+                    <button class="how-step is-active" id="how-step-0" type="button" role="tab" aria-selected="true"
+                        aria-controls="how-panel-0" tabindex="0" data-how-tab="0">
                         <span class="how-step-index">01</span>
                         <span class="how-step-copy">
                             <strong>Jelajahi peluang</strong>
@@ -407,8 +412,8 @@ $howFeatured = $featured_opportunities[0] ?? null;
                         </span>
                         <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </button>
-                    <button class="how-step" id="how-step-1" type="button" role="tab"
-                        aria-selected="false" aria-controls="how-panel-1" tabindex="-1" data-how-tab="1">
+                    <button class="how-step" id="how-step-1" type="button" role="tab" aria-selected="false"
+                        aria-controls="how-panel-1" tabindex="-1" data-how-tab="1">
                         <span class="how-step-index">02</span>
                         <span class="how-step-copy">
                             <strong>Pilih yang paling pas</strong>
@@ -416,8 +421,8 @@ $howFeatured = $featured_opportunities[0] ?? null;
                         </span>
                         <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </button>
-                    <button class="how-step" id="how-step-2" type="button" role="tab"
-                        aria-selected="false" aria-controls="how-panel-2" tabindex="-1" data-how-tab="2">
+                    <button class="how-step" id="how-step-2" type="button" role="tab" aria-selected="false"
+                        aria-controls="how-panel-2" tabindex="-1" data-how-tab="2">
                         <span class="how-step-index">03</span>
                         <span class="how-step-copy">
                             <strong>Siapkan pendaftaran</strong>
@@ -430,8 +435,8 @@ $howFeatured = $featured_opportunities[0] ?? null;
 
             <div class="col-lg-7 reveal reveal-delay-2">
                 <div class="how-preview" aria-live="polite">
-                    <div class="how-panel is-active" id="how-panel-0" role="tabpanel"
-                        aria-labelledby="how-step-0" tabindex="0" data-how-panel="0">
+                    <div class="how-panel is-active" id="how-panel-0" role="tabpanel" aria-labelledby="how-step-0"
+                        tabindex="0" data-how-panel="0">
                         <span class="how-panel-eyebrow">Langkah 1 · Jelajahi</span>
                         <h3>Semua peluang, satu pencarian.</h3>
                         <p>Gunakan kategori dan filter untuk mempersempit pilihanmu.</p>
@@ -447,8 +452,8 @@ $howFeatured = $featured_opportunities[0] ?? null;
                         </div>
                     </div>
 
-                    <div class="how-panel" id="how-panel-1" role="tabpanel"
-                        aria-labelledby="how-step-1" tabindex="0" data-how-panel="1" hidden>
+                    <div class="how-panel" id="how-panel-1" role="tabpanel" aria-labelledby="how-step-1" tabindex="0"
+                        data-how-panel="1" hidden>
                         <span class="how-panel-eyebrow">Langkah 2 · Pilih</span>
                         <h3>Periksa detail sebelum memutuskan.</h3>
                         <p>Lihat informasi penting dan pastikan peluang sesuai dengan kebutuhanmu.</p>
@@ -470,12 +475,13 @@ $howFeatured = $featured_opportunities[0] ?? null;
                             <i class="fa-solid fa-arrow-up-right-from-square how-opportunity-arrow"></i>
                         </a>
                         <?php else: ?>
-                        <div class="how-no-opportunity">Peluang terbaru akan tampil di sini setelah disetujui admin.</div>
+                        <div class="how-no-opportunity">Peluang terbaru akan tampil di sini setelah disetujui admin.
+                        </div>
                         <?php endif; ?>
                     </div>
 
-                    <div class="how-panel" id="how-panel-2" role="tabpanel"
-                        aria-labelledby="how-step-2" tabindex="0" data-how-panel="2" hidden>
+                    <div class="how-panel" id="how-panel-2" role="tabpanel" aria-labelledby="how-step-2" tabindex="0"
+                        data-how-panel="2" hidden>
                         <span class="how-panel-eyebrow">Langkah 3 · Daftar</span>
                         <div class="how-ready-icon"><i class="fa-solid fa-paper-plane"></i></div>
                         <h3>Kesempatan berikutnya bisa jadi milikmu.</h3>
@@ -538,7 +544,8 @@ $howFeatured = $featured_opportunities[0] ?? null;
             <?php endforeach; ?>
         </div>
 
-        <p class="proof-note"><i class="fa-solid fa-circle-info me-1"></i> RuangLomba belum menyimpan kutipan testimoni pengguna. Bagian ini menampilkan angka aktivitas asli, bukan ulasan yang dibuat-buat.</p>
+        <p class="proof-note"><i class="fa-solid fa-circle-info me-1"></i> RuangLomba belum menyimpan kutipan testimoni
+            pengguna. Bagian ini menampilkan angka aktivitas asli, bukan ulasan yang dibuat-buat.</p>
     </div>
 </section>
 

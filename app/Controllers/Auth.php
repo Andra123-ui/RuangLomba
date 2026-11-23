@@ -95,7 +95,7 @@ class Auth extends BaseController
         $role = $this->request->getPost('role') === 'organizer' ? 'organizer' : 'participant';
 
         $rules = [
-            'name'             => 'required|min_length[3]|max_length[100]',
+            'name'             => 'required|min_length[3]|max_length[100]|valid_name_format|clean_words',
             'email'            => 'required|valid_email|max_length[150]|is_unique[users.email]',
             'password'         => 'required|min_length[8]|max_length[72]',
             'password_confirm' => 'required|matches[password]',
@@ -106,14 +106,15 @@ class Auth extends BaseController
         } else {
             $rules['org_type']    = 'required|in_list[Sekolah,Kampus,Komunitas,Perusahaan,Lainnya]';
             $rules['phone']       = 'required|regex_match[/^(\+62|62|0)8[0-9]{8,12}$/]';
-            $rules['description'] = 'permit_empty|max_length[500]';
+            $rules['description'] = 'permit_empty|max_length[500]|clean_words';
             $rules['link']        = 'permit_empty|valid_url_strict|max_length[255]';
         }
 
         $messages = [
             'name' => [
-                'required'   => 'Nama wajib diisi.',
-                'min_length' => 'Nama minimal 3 karakter.',
+                'required'          => 'Nama wajib diisi.',
+                'min_length'        => 'Nama minimal 3 karakter.',
+                'clean_words'       => 'Nama tidak boleh mengandung kata yang kasar, tidak pantas, atau melanggar norma SARA.',
             ],
             'email' => [
                 'required'    => 'Email wajib diisi.',

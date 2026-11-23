@@ -69,14 +69,26 @@ class Profile extends BaseController
         }
 
         $rules = [
-            'name'            => 'required|min_length[3]|max_length[100]',
+            'name'            => 'required|min_length[3]|max_length[100]|valid_name_format|clean_words',
             'preferred_level' => 'permit_empty|in_list[' . implode(',', self::LEVELS) . ']',
             'preferred_mode'  => 'permit_empty|in_list[' . implode(',', self::MODES) . ']',
             'preferred_fee'   => 'permit_empty|in_list[' . implode(',', self::FEES) . ']',
+            'skills'          => 'permit_empty|clean_words',
             'avatar'          => 'permit_empty|is_image[avatar]|mime_in[avatar,image/jpg,image/jpeg,image/png,image/webp]|max_size[avatar,2048]',
         ];
 
-        if (! $this->validate($rules)) {
+        $messages = [
+            'name' => [
+                'required'          => 'Nama lengkap wajib diisi.',
+                'min_length'        => 'Nama minimal 3 karakter.',
+                'clean_words'       => 'Nama tidak boleh mengandung kata yang kasar, tidak pantas, atau melanggar norma SARA.',
+            ],
+            'skills' => [
+                'clean_words'       => 'Keahlian/tools tidak boleh mengandung kata yang tidak pantas.',
+            ],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 

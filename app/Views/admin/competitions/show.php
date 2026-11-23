@@ -113,7 +113,8 @@ $isExternal = ($c['registration_mode'] ?? 'external') === 'external';
             <div class="row g-3">
                 <div class="col-md-5">
                     <form action="<?= base_url('admin/peluang/' . $c['id'] . '/setujui') ?>" method="post"
-                        onsubmit="return confirm('Setujui dan tayangkan peluang ini?');">
+                        data-confirm-title="Setujui peluang" data-confirm-label="Setujui"
+                        data-confirm-message="Setujui dan tayangkan peluang ini?">
                         <?= csrf_field() ?>
                         <button type="submit" class="btn btn-success w-100">
                             <i class="fa-solid fa-check me-1"></i> Setujui &amp; Tayangkan
@@ -124,7 +125,8 @@ $isExternal = ($c['registration_mode'] ?? 'external') === 'external';
                 <?php if ($c['status'] !== 'rejected'): ?>
                 <div class="col-md-7">
                     <form action="<?= base_url('admin/peluang/' . $c['id'] . '/tolak') ?>" method="post"
-                        onsubmit="return confirm('Tolak peluang ini?');">
+                        data-confirm-title="Tolak peluang" data-confirm-label="Tolak"
+                        data-confirm-message="Tolak peluang ini?">
                         <?= csrf_field() ?>
                         <div class="input-group">
                             <input type="text" name="reason" class="form-control" maxlength="255"

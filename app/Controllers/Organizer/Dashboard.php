@@ -29,15 +29,13 @@ class Dashboard extends BaseController
             $likes += (int) $c['likes'];
         }
 
-        // Pendaftar: hanya peluang yang memakai pendaftaran RuangLomba,
-        // karena hanya itu yang bisa diverifikasi dari halaman Pendaftar
+        // Termasuk laporan peserta untuk peluang dengan link pendaftaran eksternal.
         $reg = $db->table('registrations r')
             ->select("COUNT(*) AS total,
                       COALESCE(SUM(r.status = 'pending'), 0) AS pending,
                       COALESCE(SUM(r.status = 'verified'), 0) AS verified", false)
             ->join('competitions c', 'c.id = r.competition_id')
             ->where('c.organizer_id', $userId)
-            ->where('c.registration_mode', 'internal')
             ->get()->getRowArray();
 
         return view('organizer/dashboard', [

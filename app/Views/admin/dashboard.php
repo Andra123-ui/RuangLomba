@@ -8,27 +8,15 @@ $fmt = static fn (int $number): string => number_format($number, 0, ',', '.');
 <style>
 .admin-dashboard { max-width: 1160px; }
 .admin-dash-hero {
-    position: relative;
-    overflow: hidden;
     padding: clamp(24px, 4vw, 42px);
-    border-radius: 24px;
-    color: #fff;
-    background: linear-gradient(120deg, var(--ocean-navy), var(--ocean-mid) 62%, var(--ocean-teal));
-    box-shadow: 0 22px 48px -28px rgba(0, 36, 107, .72);
+    border: 1px solid var(--c-border);
+    border-radius: 18px;
+    color: var(--c-black);
+    background: #fff;
+    box-shadow: 0 8px 24px -20px rgba(15, 23, 42, .35);
 }
-.admin-dash-hero::after {
-    content: '';
-    position: absolute;
-    width: 280px;
-    height: 280px;
-    top: -150px;
-    right: -40px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .1);
-}
-.admin-dash-hero > * { position: relative; z-index: 1; }
 .admin-dash-hero h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); }
-.admin-dash-hero p { margin: 10px 0 0; color: rgba(255, 255, 255, .78); }
+.admin-dash-hero p { margin: 10px 0 0; color: var(--c-gray); }
 .admin-dash-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -38,7 +26,7 @@ $fmt = static fn (int $number): string => number_format($number, 0, ',', '.');
     font-weight: 700;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, .78);
+    color: var(--c-blue);
 }
 .admin-dash-section-title {
     display: flex;
@@ -62,13 +50,12 @@ $fmt = static fn (int $number): string => number_format($number, 0, ',', '.');
     height: 46px;
     flex: 0 0 46px;
     place-items: center;
-    border-radius: 15px;
-    color: #fff;
-    background: linear-gradient(135deg, var(--ocean-navy), var(--ocean-aqua));
-    box-shadow: 0 12px 20px -12px rgba(0, 36, 107, .7);
+    border-radius: 13px;
+    color: var(--c-blue);
+    background: #EFF4FF;
 }
-.admin-dash-stat-icon.is-warn { background: linear-gradient(135deg, #D97706, #F59E0B); }
-.admin-dash-stat-number { font-family: var(--f-serif); font-size: 34px; line-height: 1; color: var(--c-blue); }
+.admin-dash-stat-icon.is-warn { color: #B45309; background: #FFF7ED; }
+.admin-dash-stat-number { font-size: 32px; font-weight: 700; line-height: 1; color: var(--c-black); }
 .admin-dash-stat-label { margin-top: 6px; font-size: 13px; color: var(--c-gray); }
 .admin-dash-stat-hint { margin-top: 7px; font-size: 12px; color: var(--c-gray); }
 .admin-dash-queue { height: 100%; }

@@ -14,7 +14,7 @@ $labels = ['pending' => 'Menunggu', 'verified' => 'Terverifikasi', 'rejected' =>
     <div class="container">
         <div class="section-head reveal is-visible mb-4">
             <h2>Pendaftaran Saya</h2>
-            <p>Pantau status pendaftaranmu di peluang yang memakai pendaftaran RuangLomba.</p>
+            <p>Pantau pendaftaran internal maupun laporan pendaftaran di link eksternal.</p>
         </div>
 
         <?php if (empty($registrations)): ?>
@@ -46,7 +46,7 @@ $labels = ['pending' => 'Menunggu', 'verified' => 'Terverifikasi', 'rejected' =>
                         <th>Penyelenggara</th>
                         <th>Tanggal daftar</th>
                         <th>Status</th>
-                        <th class="text-end">Aksi</th>
+                        <th class="text-end registration-actions-cell">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,20 +60,34 @@ $labels = ['pending' => 'Menunggu', 'verified' => 'Terverifikasi', 'rejected' =>
                                 <?php endif; ?>
                                 <div>
                                     <div class="fw-semibold"><?= esc($r['title']) ?></div>
-                                    <small class="text-secondary"><?= esc($r['type']) ?></small>
+                                    <small class="text-secondary">
+                                        <?= esc($r['type']) ?> &middot;
+                                        <?= ($r['registration_mode'] ?? 'internal') === 'external' ? 'Pendaftaran eksternal' : 'Pendaftaran RuangLomba' ?>
+                                    </small>
                                 </div>
                             </div>
                         </td>
                         <td><?= esc($r['organizer_name']) ?></td>
                         <td><?= esc(date('d M Y', strtotime($r['registered_at']))) ?></td>
                         <td>
+                            <?php if (($r['registration_mode'] ?? 'internal') === 'external' && $r['status'] === 'pending'): ?>
+                            <span class="badge text-bg-<?= $color ?>">Menunggu verifikasi penyelenggara</span>
+                            <?php elseif (($r['registration_mode'] ?? 'internal') === 'external' && $r['status'] === 'verified'): ?>
+                            <span class="badge text-bg-<?= $color ?>">Terverifikasi penyelenggara</span>
+                            <?php else: ?>
                             <span class="badge text-bg-<?= $color ?>"><?= esc($label) ?></span>
+                            <?php endif; ?>
+                            <?php if ($r['type'] === 'Lomba' && ! empty($r['placement'])): ?>
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1">
+                                <i class="fa-solid fa-trophy me-1"></i>Juara <?= (int) $r['placement'] ?>
+                            </span>
+                            <?php endif; ?>
                             <?php if ($r['status'] === 'rejected' && ! empty($r['reject_reason'])): ?>
                             <div class="small text-secondary mt-1">Alasan: <?= esc($r['reject_reason']) ?></div>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">
-                            <div class="d-flex justify-content-end gap-1">
+                        <td class="text-end registration-actions-cell">
+                            <div class="registration-action-buttons">
                                 <a href="<?= base_url('peluang/' . $r['competition_id']) ?>"
                                     class="btn btn-sm btn-outline-primary">Lihat</a>
                                 <?php if ($r['status'] === 'verified'): ?>

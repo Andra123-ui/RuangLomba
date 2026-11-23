@@ -45,7 +45,13 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
     <div class="mb-3">
         <label for="name" class="form-label" id="nameLabel">Nama lengkap</label>
         <input type="text" class="form-control auth-input" id="name" name="name" value="<?= esc(old('name')) ?>"
-            autocomplete="name" required>
+            autocomplete="name" placeholder="Contoh: Muhammad Budi Santoso" required>
+        <div class="form-text d-flex align-items-start gap-2 mt-2 p-2 rounded bg-light border border-light-subtle" id="nameHint">
+            <i class="fa-solid fa-certificate text-primary mt-1 flex-shrink-0"></i>
+            <span class="small" id="nameHintText">
+                Gunakan <strong>nama asli</strong> berawalan huruf kapital. Nama ini akan dicetak otomatis pada <strong>E-Sertifikat</strong> dan <strong>ID Card</strong> peserta. Penggunaan nama samaran atau nama makanan/objek dapat menggugurkan verifikasi.
+            </span>
+        </div>
     </div>
 
     <div class="mb-3">
@@ -160,6 +166,16 @@ $orgTypes   = ['Sekolah', 'Kampus', 'Komunitas', 'Perusahaan', 'Lainnya'];
         organizer.hidden = !isOrg;
 
         nameLabel.textContent = isOrg ? 'Nama penyelenggara / organisasi' : 'Nama lengkap';
+        var nameInput = document.getElementById('name');
+        var nameHintText = document.getElementById('nameHintText');
+        if (nameInput) {
+            nameInput.placeholder = isOrg ? 'Contoh: BEM Universitas Indonesia' : 'Contoh: Muhammad Budi Santoso';
+        }
+        if (nameHintText) {
+            nameHintText.innerHTML = isOrg
+                ? 'Gunakan <strong>nama resmi lembaga / organisasi</strong> berawalan huruf kapital untuk memudahkan verifikasi legalitas penyelenggara.'
+                : 'Gunakan <strong>nama asli</strong> berawalan huruf kapital. Nama ini akan dicetak otomatis pada <strong>E-Sertifikat</strong> dan <strong>ID Card</strong> peserta. Penggunaan nama samaran atau nama makanan/objek dapat menggugurkan verifikasi.';
+        }
     }
     radios.forEach(function(r) {
         r.addEventListener('change', applyRole);

@@ -10,8 +10,8 @@ class Registrations extends BaseController
      public function index()
     {
         $rows = db_connect()->table('registrations r')
-            ->select('r.id, r.status, r.reject_reason, r.registered_at, r.verified_at,
-                      c.id AS competition_id, c.title, c.type, c.poster, c.deadline,
+            ->select('r.id, r.status, r.reject_reason, r.registered_at, r.verified_at, r.placement,
+                      c.id AS competition_id, c.title, c.type, c.poster, c.deadline, c.registration_mode,
                       u.name AS organizer_name')
             ->join('competitions c', 'c.id = r.competition_id')
             ->join('users u', 'u.id = c.organizer_id')
@@ -162,6 +162,54 @@ class Registrations extends BaseController
             ->with('success', 'Pendaftaran terkirim. Tunggu verifikasi dari penyelenggara.');
     }
 
+    public function reportExternal(int $id)
+    {
+        $competition = $this->findExternal($id);
+        $back = base_url('peluang/' . $id);
+
+        if (strtotime($competition['deadline']) < time()) {
+            return redirect()->to($back)->with('error', 'Pendaftaran sudah ditutup.');
+        }
+
+        if (! preg_match('#^https?://#i', trim((string) $competition['registration_link']))) {
+            return redirect()->to($back)->with('error', 'Link pendaftaran eksternal belum tersedia.');
+        }
+
+        $db = db_connect();
+        $exists = $db->table('registrations')
+            ->where('user_id', $this->userId())
+            ->where('competition_id', $id)
+            ->countAllResults() > 0;
+
+        if ($exists) {
+            return redirect()->to($back)->with('error', 'Kamu sudah melaporkan atau mendaftar di peluang ini.');
+        }
+
+        $db->transStart();
+
+        $db->table('registrations')->insert([
+            'user_id'        => $this->userId(),
+            'competition_id' => $id,
+            'status'         => 'pending',
+        ]);
+
+        $db->table('notifications')->insert([
+            'user_id' => (int) $competition['organizer_id'],
+            'title'   => 'Laporan pendaftaran eksternal',
+            'message' => session()->get('userName') . ' melaporkan sudah mendaftar pada ' . $competition['title'] . '.',
+            'type'    => 'registration',
+        ]);
+
+        $db->transComplete();
+
+        if (! $db->transStatus()) {
+            return redirect()->to($back)->with('error', 'Laporan pendaftaran gagal disimpan. Coba lagi.');
+        }
+
+        return redirect()->to($back)
+            ->with('success', 'Laporan terkirim. Status menunggu verifikasi penyelenggara.');
+    }
+
     public function printCard(int $id)
     {
         $db = db_connect();
@@ -206,6 +254,24 @@ class Registrations extends BaseController
             ->where('competitions.id', $id)
             ->where('competitions.status', 'approved')
             ->where('competitions.registration_mode', 'internal')
+            ->get()->getRowArray();
+
+        if (! $row) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        return $row;
+    }
+
+    /** Peluang tayang dengan pendaftaran eksternal, selain itu 404 */
+    private function findExternal(int $id): array
+    {
+        $row = db_connect()->table('competitions')
+            ->select('competitions.*, users.name AS organizer_name')
+            ->join('users', 'users.id = competitions.organizer_id')
+            ->where('competitions.id', $id)
+            ->where('competitions.status', 'approved')
+            ->where('competitions.registration_mode', 'external')
             ->get()->getRowArray();
 
         if (! $row) {

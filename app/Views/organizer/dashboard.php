@@ -58,28 +58,22 @@ $statusLabels = [
     height: 100%;
     display: flex;
     align-items: flex-start;
-    gap: 16px;
-    padding: 22px;
+    gap: 14px;
+    padding: 19px;
     color: inherit;
 }
 
 .dash-stat-ico {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 15px;
+    border-radius: 12px;
     font-size: 18px;
-    color: #fff;
-    background: linear-gradient(135deg, var(--ocean-navy), var(--ocean-mid) 60%, var(--ocean-teal));
-    box-shadow: 0 12px 20px -12px rgba(0, 36, 107, .7);
-    transition: transform .4s var(--ease);
-}
-
-.card-ruang:hover .dash-stat-ico {
-    transform: rotate(-8deg) scale(1.08);
+    color: var(--c-blue);
+    background: #EFF4FF;
 }
 
 .dash-stat-hint {
@@ -90,8 +84,8 @@ $statusLabels = [
 
 /* Perlu ditindak: nuansa oranye */
 .dash-stat.is-alert .dash-stat-ico {
-    background: linear-gradient(135deg, #D97706, #F59E0B);
-    box-shadow: 0 12px 20px -12px rgba(217, 119, 6, .7);
+    color: #B45309;
+    background: #FFF7ED;
 }
 
 .dash-stat.is-alert .dash-stat-hint {
@@ -104,10 +98,7 @@ a.card-ruang {
 }
 </style>
 
-<div class="container org-shell">
-    <?= $this->include('organizer/_sidebar') ?>
-
-    <div class="org-main">
+<div class="org-main">
         <header class="org-head">
             <div>
                 <h1>Halo, <?= esc(session()->get('userName')) ?></h1>
@@ -157,6 +148,5 @@ a.card-ruang {
 
         <a href="<?= base_url('organizer/lomba') ?>" class="btn btn-outline-primary">Kelola Peluang Saya</a>
     </div>
-</div>
 
 <?= $this->endSection() ?>

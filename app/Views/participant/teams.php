@@ -119,7 +119,9 @@
                             Siap didaftarkan ke lomba bertipe Tim
                         </span>
                         <form action="<?= base_url('tim/' . $t['id'] . '/keluar') ?>" method="post"
-                              onsubmit="return confirm('<?= $t['is_leader'] ? 'Kamu adalah ketua tim. Membubarkan tim akan menghapus tim ini untuk semua anggota. Lanjutkan?' : 'Yakin ingin keluar dari tim ini?' ?>');">
+                              data-confirm-title="<?= $t['is_leader'] ? 'Bubarkan tim' : 'Keluar dari tim' ?>"
+                              data-confirm-label="<?= $t['is_leader'] ? 'Bubarkan tim' : 'Keluar tim' ?>"
+                              data-confirm-message="<?= esc($t['is_leader'] ? 'Kamu adalah ketua tim. Membubarkan tim akan menghapus tim ini untuk semua anggota. Lanjutkan?' : 'Yakin ingin keluar dari tim ini?', 'attr') ?>">
                             <?= csrf_field() ?>
                             <button type="submit" class="btn btn-outline-danger btn-sm">
                                 <i class="fa-solid <?= $t['is_leader'] ? 'fa-trash' : 'fa-arrow-right-from-bracket' ?> me-1"></i>

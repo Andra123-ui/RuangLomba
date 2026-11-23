@@ -135,7 +135,8 @@ $badge = [
                             </a>
                             <?php if ($org['verification_status'] !== 'verified' && ! empty($org['verification_document'])): ?>
                             <form action="<?= base_url('admin/organizer/' . $org['id'] . '/verifikasi') ?>" method="post" class="d-inline"
-                                  onsubmit="return confirm('Verifikasi instansi ini secara resmi? Centang biru akan aktif.');">
+                                  data-confirm-title="Verifikasi instansi" data-confirm-label="Setujui"
+                                  data-confirm-message="Verifikasi instansi ini secara resmi? Centang biru akan aktif.">
                                 <?= csrf_field() ?>
                                 <button type="submit" class="btn btn-sm btn-success ms-1">
                                     <i class="fa-solid fa-check me-1"></i> Setujui

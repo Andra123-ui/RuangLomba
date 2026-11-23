@@ -20,14 +20,11 @@ $modeVal     = $val('implementation_type', 'Online');
 $regMode   = old('registration_mode', $isEdit ? ($competition['registration_mode'] ?? 'external') : 'external');
 $regLocked = $regLocked ?? false;
 if ($regLocked) {
-    $regMode = 'internal';
+    $regMode = $competition['registration_mode'] ?? 'external';
 }
 ?>
 
-<div class="container org-shell">
-    <?= $this->include('organizer/_sidebar') ?>
-
-    <div class="org-main">
+<div class="org-main">
         <header class="org-head">
             <div>
                 <h1><?= $isEdit ? 'Ubah Peluang' : 'Tambah Peluang' ?></h1>
@@ -199,7 +196,7 @@ if ($regLocked) {
                         </div>
 
                         <?php if ($regLocked): ?>
-                        <input type="hidden" name="registration_mode" value="internal">
+                        <input type="hidden" name="registration_mode" value="<?= esc($regMode, 'attr') ?>">
                         <div class="form-text">Cara pendaftaran dikunci karena sudah ada peserta yang mendaftar.</div>
                         <?php endif; ?>
 
@@ -313,7 +310,6 @@ if ($regLocked) {
             </form>
         </div>
     </div>
-</div>
 
 <script>
 (function() {

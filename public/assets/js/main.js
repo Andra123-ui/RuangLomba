@@ -5,8 +5,101 @@
    scroll progress, reveal-on-scroll, shadow navbar, dan dummy LombaMatch AI.
    ========================================================================== */
 
+window.showRlToast = function (message, type) {
+  var toast = document.createElement('div');
+  var iconWrap = document.createElement('span');
+  var icon = document.createElement('i');
+  var text = document.createElement('div');
+  var close = document.createElement('button');
+  var isError = type === 'error';
+
+  toast.className = 'rl-toast ' + (isError ? 'is-error' : 'is-success');
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  iconWrap.className = 'rl-toast-ico';
+  icon.className = 'fa-solid ' + (isError ? 'fa-circle-exclamation' : 'fa-circle-check');
+  icon.setAttribute('aria-hidden', 'true');
+  text.className = 'rl-toast-msg';
+  text.textContent = message;
+  close.className = 'rl-toast-close';
+  close.type = 'button';
+  close.setAttribute('aria-label', 'Tutup');
+  close.textContent = '×';
+  iconWrap.appendChild(icon);
+  toast.appendChild(iconWrap);
+  toast.appendChild(text);
+  toast.appendChild(close);
+  document.body.appendChild(toast);
+
+  function hide() {
+    toast.classList.remove('show');
+    window.setTimeout(function () { toast.remove(); }, 350);
+  }
+
+  close.addEventListener('click', hide);
+  window.requestAnimationFrame(function () { toast.classList.add('show'); });
+  window.setTimeout(hide, 5000);
+};
+
 document.addEventListener('DOMContentLoaded', function () {
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var confirmModalEl = document.getElementById('rlConfirmModal');
+
+  if (confirmModalEl && window.bootstrap) {
+    var confirmModal = window.bootstrap.Modal.getOrCreateInstance(confirmModalEl);
+    var confirmTitle = document.getElementById('rlConfirmTitle');
+    var confirmMessage = document.getElementById('rlConfirmMessage');
+    var confirmAccept = document.getElementById('rlConfirmAccept');
+    var pendingForm = null;
+    var confirmTrigger = null;
+
+    function restoreConfirmFocus() {
+      if (confirmTrigger && confirmTrigger !== document.body && document.contains(confirmTrigger)) {
+        confirmTrigger.focus();
+      }
+    }
+
+    document.addEventListener('submit', function (event) {
+      var form = event.target;
+      if (!form.matches || !form.matches('form[data-confirm-message]')) return;
+      if (form.dataset.confirmed === 'true') {
+        delete form.dataset.confirmed;
+        return;
+      }
+
+      event.preventDefault();
+      pendingForm = form;
+      confirmTrigger = event.submitter || document.activeElement;
+      confirmTitle.textContent = form.dataset.confirmTitle || 'Konfirmasi tindakan';
+      confirmMessage.textContent = form.dataset.confirmMessage;
+      confirmAccept.textContent = form.dataset.confirmLabel || 'Ya, lanjutkan';
+      confirmModal.show();
+    });
+
+    confirmAccept.addEventListener('click', function () {
+      if (!pendingForm) return;
+      var form = pendingForm;
+      pendingForm = null;
+      form.dataset.confirmed = 'true';
+      confirmModal.hide();
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+      } else {
+        form.submit();
+      }
+      if (form.dataset.confirmed === 'true') delete form.dataset.confirmed;
+    });
+
+    confirmModalEl.addEventListener('hide.bs.modal', function () {
+      window.setTimeout(restoreConfirmFocus, 0);
+    });
+
+    confirmModalEl.addEventListener('hidden.bs.modal', function () {
+      restoreConfirmFocus();
+      confirmTrigger = null;
+      pendingForm = null;
+    });
+  }
 
   /* ---------------------------------------------------------------------
      1. Scroll progress bar (garis tipis di atas navbar)

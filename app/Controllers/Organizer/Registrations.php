@@ -3,6 +3,7 @@
 namespace App\Controllers\Organizer;
 
 use App\Controllers\BaseController;
+use App\Libraries\LeaderboardScoring;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 class Registrations extends BaseController
@@ -14,11 +15,6 @@ class Registrations extends BaseController
     public function index(int $competitionId)
     {
         $competition = $this->findOwnedCompetition($competitionId);
-
-        if (($competition['registration_mode'] ?? 'external') !== 'internal') {
-            return redirect()->to(base_url('organizer/lomba'))
-                ->with('error', 'Peluang ini memakai link pendaftaran eksternal, jadi tidak ada daftar pendaftar di RuangLomba.');
-        }
 
         $status = $this->request->getGet('status');
         if (! in_array($status, self::STATUSES, true)) {
@@ -89,7 +85,7 @@ class Registrations extends BaseController
             return redirect()->to($back)->with('error', 'Pendaftar ini sudah terverifikasi.');
         }
 
-        $this->changeStatus(
+        if (! $this->changeStatus(
             $reg,
             [
                 'status'        => 'verified',
@@ -98,7 +94,9 @@ class Registrations extends BaseController
             ],
             'Pendaftaran diverifikasi',
             'Pendaftaranmu pada ' . $reg['competition_title'] . ' telah diverifikasi.'
-        );
+        )) {
+            return redirect()->to($back)->with('error', 'Pendaftaran gagal diverifikasi. Silakan coba lagi.');
+        }
 
         return redirect()->to($back)->with('success', 'Pendaftar berhasil diverifikasi.');
     }
@@ -118,18 +116,64 @@ class Registrations extends BaseController
                 ->with('error', 'Alasan penolakan wajib diisi (3 sampai 255 karakter).');
         }
 
-        $this->changeStatus(
+        $fields = [
+            'status'        => 'rejected',
+            'verified_at'   => null,
+            'reject_reason' => $reason,
+        ];
+        if ($reg['competition_type'] === 'Lomba') {
+            $fields['placement'] = null;
+        }
+
+        if (! $this->changeStatus(
             $reg,
-            [
-                'status'        => 'rejected',
-                'verified_at'   => null,
-                'reject_reason' => $reason,
-            ],
+            $fields,
             'Pendaftaran ditolak',
             'Pendaftaranmu pada ' . $reg['competition_title'] . ' ditolak. Alasan: ' . $reason
-        );
+        )) {
+            return redirect()->to($back)->with('error', 'Pendaftaran gagal ditolak. Silakan coba lagi.');
+        }
 
         return redirect()->to($back)->with('success', 'Pendaftar ditolak.');
+    }
+
+    public function setPlacement(int $id)
+    {
+        $reg  = $this->findOwnedRegistration($id);
+        $back = base_url('organizer/lomba/' . $reg['competition_id'] . '/pendaftar');
+
+        if ($reg['competition_type'] !== 'Lomba') {
+            return redirect()->to($back)->with('error', 'Hasil juara hanya dapat dicatat untuk lomba.');
+        }
+
+        if ($reg['status'] !== 'verified') {
+            return redirect()->to($back)->with('error', 'Verifikasi pendaftaran sebelum mencatat hasil lomba.');
+        }
+
+        $rawPlacement = $this->request->getPost('placement');
+        if (! is_string($rawPlacement) || ! in_array($rawPlacement, ['', '1', '2', '3'], true)) {
+            return redirect()->to($back)->with('error', 'Pilih juara 1, 2, 3, atau bukan juara.');
+        }
+
+        $placement = $rawPlacement === '' ? null : (int) $rawPlacement;
+        $db = db_connect();
+        $db->transStart();
+
+        $this->syncPlacementAwards($db, $reg, $placement);
+        $db->table('registrations')
+            ->where('id', $id)
+            ->update(['placement' => $placement]);
+
+        $db->transComplete();
+        if (! $db->transStatus()) {
+            return redirect()->to($back)->with('error', 'Hasil lomba gagal disimpan. Silakan coba lagi.');
+        }
+
+        $message = $placement === null
+            ? 'Hasil juara berhasil dihapus.'
+            : 'Hasil juara berhasil disimpan dan poin prestasi diperbarui.';
+
+        return redirect()->to($back)->with('success', $message);
     }
 
     // ------------------------------------------------------------- HELPERS
@@ -158,7 +202,7 @@ class Registrations extends BaseController
     private function findOwnedRegistration(int $id): array
     {
         $row = db_connect()->table('registrations r')
-            ->select('r.*, c.title AS competition_title')
+            ->select('r.*, c.title AS competition_title, c.type AS competition_type')
             ->join('competitions c', 'c.id = r.competition_id')
             ->where('r.id', $id)
             ->where('c.organizer_id', $this->userId())
@@ -172,15 +216,34 @@ class Registrations extends BaseController
     }
 
     /** Ubah status dan kirim notifikasi ke peserta dalam satu transaksi */
-    private function changeStatus(array $reg, array $fields, string $title, string $message): void
+    private function changeStatus(array $reg, array $fields, string $title, string $message): bool
     {
         $db = db_connect();
         $db->transStart();
 
+        if ($reg['competition_type'] === 'Lomba' && array_key_exists('placement', $fields)) {
+            $placement = $fields['placement'] === null ? null : (int) $fields['placement'];
+            $this->syncPlacementAwards($db, $reg, $placement);
+        }
+
         $db->table('registrations')->where('id', $reg['id'])->update($fields);
 
-        if (($fields['status'] ?? '') === 'verified') {
-            $db->query("UPDATE `users` SET `points` = `points` + 50 WHERE `id` = ?", [(int) $reg['user_id']]);
+        if (
+            ($fields['status'] ?? '') === 'verified'
+            && $reg['competition_type'] !== 'Lomba'
+            && ! $this->hasParticipationAward($db, (int) $reg['id'])
+        ) {
+            $points = LeaderboardScoring::NON_COMPETITION_VERIFIED_POINTS;
+            $db->query('UPDATE `users` SET `points` = `points` + ? WHERE `id` = ?', [
+                $points,
+                (int) $reg['user_id'],
+            ]);
+            $db->table('registration_point_awards')->insert([
+                'registration_id' => (int) $reg['id'],
+                'user_id'         => (int) $reg['user_id'],
+                'award_type'      => 'participation',
+                'points'          => $points,
+            ]);
         }
 
         $db->table('notifications')->insert([
@@ -191,5 +254,63 @@ class Registrations extends BaseController
         ]);
 
         $db->transComplete();
+        return $db->transStatus();
+    }
+
+    private function hasParticipationAward($db, int $registrationId): bool
+    {
+        return $db->table('registration_point_awards')
+            ->where('registration_id', $registrationId)
+            ->where('award_type', 'participation')
+            ->countAllResults() > 0;
+    }
+
+    private function syncPlacementAwards($db, array $reg, ?int $placement): void
+    {
+        $awardQuery = $db->table('registration_point_awards')
+            ->where('registration_id', (int) $reg['id'])
+            ->where('award_type', 'placement');
+        $existingAwards = $awardQuery->get()->getResultArray();
+
+        foreach ($existingAwards as $award) {
+            $db->query('UPDATE `users` SET `points` = GREATEST(`points` - ?, 0) WHERE `id` = ?', [
+                (int) $award['points'],
+                (int) $award['user_id'],
+            ]);
+        }
+
+        $db->table('registration_point_awards')
+            ->where('registration_id', (int) $reg['id'])
+            ->where('award_type', 'placement')
+            ->delete();
+
+        $points = LeaderboardScoring::pointsForPlacement($placement);
+        if ($points === 0) {
+            return;
+        }
+
+        $recipientIds = [(int) $reg['user_id']];
+        if (! empty($reg['team_id'])) {
+            $members = $db->table('team_members')
+                ->select('user_id')
+                ->where('team_id', (int) $reg['team_id'])
+                ->where('status', 'accepted')
+                ->get()
+                ->getResultArray();
+
+            foreach ($members as $member) {
+                $recipientIds[] = (int) $member['user_id'];
+            }
+        }
+
+        foreach (array_unique($recipientIds) as $userId) {
+            $db->query('UPDATE `users` SET `points` = `points` + ? WHERE `id` = ?', [$points, $userId]);
+            $db->table('registration_point_awards')->insert([
+                'registration_id' => (int) $reg['id'],
+                'user_id'         => $userId,
+                'award_type'      => 'placement',
+                'points'          => $points,
+            ]);
+        }
     }
 }

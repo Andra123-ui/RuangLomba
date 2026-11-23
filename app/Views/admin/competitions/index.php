@@ -72,7 +72,8 @@ $badge = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 'danger
                                 class="btn btn-sm btn-outline-primary">Tinjau</a>
                             <?php if ($c['status'] !== 'approved'): ?>
                             <form action="<?= base_url('admin/peluang/' . $c['id'] . '/setujui') ?>" method="post"
-                                class="d-inline" onsubmit="return confirm('Setujui dan tayangkan peluang ini?');">
+                                class="d-inline" data-confirm-title="Setujui peluang" data-confirm-label="Setujui"
+                                data-confirm-message="Setujui dan tayangkan peluang ini?">
                                 <?= csrf_field() ?>
                                 <button type="submit" class="btn btn-sm btn-success">Setujui</button>
                             </form>

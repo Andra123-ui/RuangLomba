@@ -19,14 +19,17 @@ $waNumber = function (string $phone): string {
 };
 ?>
 
-<div class="container org-shell">
-    <?= $this->include('organizer/_sidebar') ?>
-
-    <div class="org-main">
+<div class="org-main">
         <header class="org-head">
             <div>
                 <h1>Pendaftar</h1>
                 <p><?= esc($competition['title']) ?></p>
+                <?php if (($competition['registration_mode'] ?? 'internal') === 'external'): ?>
+                <p class="small text-secondary mb-0">Peserta melaporkan bahwa mereka sudah mendaftar di luar RuangLomba. Periksa pendaftaran pada platform eksternal sebelum memverifikasi.</p>
+                <?php endif; ?>
+                <?php if (($competition['type'] ?? '') === 'Lomba'): ?>
+                <p class="small text-secondary mb-0">Catat hasil setelah lomba selesai. Poin: Juara 1 +100, Juara 2 +75, Juara 3 +50; anggota tim terdaftar mendapat poin yang sama.</p>
+                <?php endif; ?>
             </div>
             <div class="d-flex gap-2">
                 <a href="<?= base_url('organizer/lomba/' . $competition['id'] . '/cetak-pendaftar') ?>" target="_blank" class="btn btn-outline-success">
@@ -105,9 +108,27 @@ $waNumber = function (string $phone): string {
                             <?php endif; ?>
                         </td>
                         <td class="text-end text-nowrap">
+                            <?php if (($competition['type'] ?? '') === 'Lomba' && $r['status'] === 'verified'): ?>
+                            <form action="<?= base_url('organizer/pendaftar/' . $r['id'] . '/hasil') ?>"
+                                method="post" class="registration-placement-form">
+                                <?= csrf_field() ?>
+                                <select name="placement" class="form-select form-select-sm"
+                                    aria-label="Hasil lomba untuk <?= esc($r['name'], 'attr') ?>">
+                                    <option value="" <?= empty($r['placement']) ? 'selected' : '' ?>>Belum juara</option>
+                                    <?php foreach ([1, 2, 3] as $place): ?>
+                                    <option value="<?= $place ?>" <?= (int) ($r['placement'] ?? 0) === $place ? 'selected' : '' ?>>
+                                        Juara <?= $place ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Simpan hasil</button>
+                            </form>
+                            <?php endif; ?>
+
                             <?php if ($r['status'] !== 'verified'): ?>
                             <form action="<?= base_url('organizer/pendaftar/' . $r['id'] . '/verifikasi') ?>"
-                                method="post" class="d-inline" onsubmit="return confirm('Verifikasi pendaftar ini?');">
+                                method="post" class="d-inline" data-confirm-title="Verifikasi pendaftar"
+                                data-confirm-label="Verifikasi" data-confirm-message="Verifikasi pendaftar ini?">
                                 <?= csrf_field() ?>
                                 <button type="submit" class="btn btn-sm btn-success">Verifikasi</button>
                             </form>
@@ -126,7 +147,6 @@ $waNumber = function (string $phone): string {
             </table>
         </div>
         <?php endif; ?>
-    </div>
 </div>
 
 <!-- Modal tolak pendaftar -->
